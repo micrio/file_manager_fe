@@ -21,8 +21,8 @@ const UploadFileSchema = z.object({
   files: z
     .any()
     .refine((file) => file?.length == 1, 'File is required.')
-    // .refine((file) => file[0]?.type === 'application/pdf', 'Must be a PDF.')
-    // .refine((file) => file[0]?.size <= 3000000, `Max file size is 3MB.`),
+  // .refine((file) => file[0]?.type === 'application/pdf', 'Must be a PDF.')
+  // .refine((file) => file[0]?.size <= 3000000, `Max file size is 3MB.`),
 });
 
 const UploadFile = () => {
@@ -58,7 +58,7 @@ const UploadFile = () => {
         addFileToFileList(response);
       }
     }
-  }, [id, receivedData, uploadFile.folderUniqueToken , addFileToFileList]);
+  }, [id, receivedData, uploadFile.folderUniqueToken, addFileToFileList]);
 
   const onSubmit = async (values: z.infer<typeof UploadFileSchema>) => {
     await uploadFile.request(values.files);
@@ -69,12 +69,12 @@ const UploadFile = () => {
 
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <div className="w-10">
+      <div className="w-auto">
         <DialogTrigger
-          className="p-2 bg-white hover:bg-black hover:bg-opacity-10"
+          className="flex items-center gap-3 p-2 text-slate-600 hover:text-black transition-colors rounded-md"
           title="Upload File"
         >
-          <FileUp color={'black'} size={'25px'} />
+          <FileUp className="w-6 h-6" />
         </DialogTrigger>
       </div>
       <DialogContent className="absolute py-8">

@@ -2,6 +2,7 @@ export const ROUTES = {
   root: '/',
   signin: '/signin',
   signup: '/signup',
-  folders: '/folders',
-  foldersWithId: '/folders/:id'
+  home: '/home',
+  storage: '/storage',
+  storageWithId: '/storage/:id'
 };

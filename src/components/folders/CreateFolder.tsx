@@ -52,12 +52,12 @@ const CreateFolder = () => {
 
   return (
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-      <div className="w-10">
+      <div className="w-auto">
         <DialogTrigger
-          className="p-2 bg-white hover:bg-black hover:bg-opacity-10"
+          className="flex items-center gap-3 p-2 text-sm font-medium text-slate-600 hover:text-black transition-colors rounded-md"
           title="Create Folder"
         >
-          <FolderPlus color={'black'} size={'25px'} />
+          <FolderPlus className="w-6 h-6" />
         </DialogTrigger>
       </div>
       <DialogContent className="absolute py-8">

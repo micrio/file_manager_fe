@@ -15,7 +15,7 @@ const Home = () => {
 
   return (
     <>
-     <FolderList folders={folders} />
+      <FolderList folders={folders} />
     </>
   );
 };

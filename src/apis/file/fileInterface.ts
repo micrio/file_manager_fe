@@ -5,6 +5,7 @@ export interface IFileData {
   filename: string | null;
   file_extension: string | null;
   folder_id: number | null;
+  created_at: string | null;
 }
 
 export interface IFileListResponse {

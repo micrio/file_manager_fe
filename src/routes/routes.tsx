@@ -6,9 +6,10 @@ import {
 
 import DefaultLayout from '@/layouts/default/DefaultLayout';
 import PrivateRoute from '@/layouts/private/PrivateRoute';
-import Signup from '@/features/Auth/Signup';
-import Signin from '@/features/Auth/Signin';
-import Folders from '@/features/Folders/Folders';
+import Signup from '@/pages/Auth/Signup';
+import Signin from '@/pages/Auth/Signin';
+import Home from '@/pages/Home/Home';
+import Storage from '@/pages/Storage/Storage';
 
 import { ROUTES } from "@/constants/routes";
 import NotFound from "@/components/common/NotFound";
@@ -19,8 +20,14 @@ const Routes = () => {
       <RouterProvider
         router={createBrowserRouter([
           {
-            path: ROUTES.root,
-            element: <Navigate to="/signin" replace />,
+            path: "/",
+            element: (
+              <PrivateRoute>
+                <DefaultLayout>
+                  <Home />
+                </DefaultLayout>
+              </PrivateRoute>
+            ),
           },
           {
             path: ROUTES.signin,
@@ -39,21 +46,31 @@ const Routes = () => {
             ),
           },
           {
-            path: ROUTES.folders,
+            path: ROUTES.home,
             element: (
               <PrivateRoute>
                 <DefaultLayout>
-                  <Folders />
+                  <Home />
                 </DefaultLayout>
               </PrivateRoute>
             ),
           },
           {
-            path: ROUTES.foldersWithId,
+            path: ROUTES.storage,
             element: (
               <PrivateRoute>
                 <DefaultLayout>
-                  <Folders />
+                  <Storage />
+                </DefaultLayout>
+              </PrivateRoute>
+            ),
+          },
+          {
+            path: ROUTES.storageWithId,
+            element: (
+              <PrivateRoute>
+                <DefaultLayout>
+                  <Storage />
                 </DefaultLayout>
               </PrivateRoute>
             ),

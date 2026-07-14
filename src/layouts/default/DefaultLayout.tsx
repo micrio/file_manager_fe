@@ -33,8 +33,8 @@ const DefaultLayout = ({ children }: IProp) => {
       setSigningIn(true);
 
       setTimeout(() => {
-        location.pathname = ROUTES.folders;
-        navigate(ROUTES.folders);
+        location.pathname = ROUTES.home;
+        navigate(ROUTES.home);
         setEnableLoader(false);
         setSigningIn(false);
       }, 2000);
@@ -42,7 +42,7 @@ const DefaultLayout = ({ children }: IProp) => {
 
     if (
       !enableLoader &&
-      currentPath === ROUTES.folders &&
+      currentPath === ROUTES.home &&
       !auth.isAuthenticated()
     ) {
       location.pathname = ROUTES.signin;
