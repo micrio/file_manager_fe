@@ -18,22 +18,19 @@ interface IProp {
 
 const DefaultLayout = ({ children }: IProp) => {
   const { auth, enableLoader, setEnableLoader, signingIn, setSigningIn } = useAuthStore();
-  const location = useLocation();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const currentPath = location.pathname;
-
     if (
       !enableLoader && !signingIn &&
-      (currentPath === ROUTES.signin || currentPath === ROUTES.signup) &&
+      (pathname === ROUTES.signin || pathname === ROUTES.signup) &&
       auth.isAuthenticated()
     ) {
       setEnableLoader(true);
       setSigningIn(true);
 
       setTimeout(() => {
-        location.pathname = ROUTES.home;
         navigate(ROUTES.home);
         setEnableLoader(false);
         setSigningIn(false);
@@ -42,15 +39,13 @@ const DefaultLayout = ({ children }: IProp) => {
 
     if (
       !enableLoader &&
-      currentPath === ROUTES.home &&
       !auth.isAuthenticated()
     ) {
-      location.pathname = ROUTES.signin;
       navigate(ROUTES.signin);
     }
   }, [
     auth,
-    location,
+    pathname,
     enableLoader,
     setEnableLoader,
     signingIn,
