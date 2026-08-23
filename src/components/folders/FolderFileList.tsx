@@ -58,7 +58,6 @@ const FolderFileList = ({ items = [] }: IProps) => {
   }, [receivedData, updateFileName, removeFilePath, updateFolderPath, removeFolderPath]);
 
   useEffect(() => {
-    console.log(items);
     if (items.length === 0 && api.status == String(API_RESPONSE_CODE.notFound)) {
       navigate(-1);
     }

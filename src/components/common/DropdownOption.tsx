@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
@@ -8,6 +9,7 @@ import { Label } from "../ui/label";
 import { useFoldersStore } from "@/store/useFolderStore";
 import { useFileStore } from "@/store/userFileStore";
 import { TOAST_VARIANT_DESTRUCTIVE, TOAST_VARIANT_GHOST } from "@/constants/components/ui/toastConstant";
+import { ROUTES } from "@/constants/routes";
 
 interface IProps {
   object_parent_id?: string;
@@ -21,17 +23,21 @@ const DropdownOption = ({
   object_name,
   object_type,
 }: IProps) => {
+  const location = useLocation();
   const [openRenameDialog, setOpenRenameDialog] = useState<boolean>(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState<boolean>(false);
   const [disableRenameBtn, setDisableRenameBtn] = useState<boolean>(true);
   const {
     renameFolder,
     renameFolderRequest,
+    trashFolderRequest,
     removeFolderRequest
   } = useFoldersStore();
   const { renameFile, removeFileRequest } = useFileStore();
   const isObjectTypeFolder = object_type === 'folder';
   const isObjectTypeFile = object_type === 'file';
+
+  const isTrashRoute = location.pathname.startsWith(ROUTES.trash);
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -59,7 +65,11 @@ const DropdownOption = ({
 
   const handleDelete = async () => {
     if (isObjectTypeFolder) {
-      await removeFolderRequest(object_id);
+      if (isTrashRoute) {
+        await removeFolderRequest(object_id);
+      } else {
+        await trashFolderRequest(object_id);
+      }
     }
 
     if (isObjectTypeFile) {
@@ -67,7 +77,7 @@ const DropdownOption = ({
     }
 
     setOpenDeleteDialog(false);
-  }
+  };
 
   useEffect(() => {
     if (isObjectTypeFolder) {

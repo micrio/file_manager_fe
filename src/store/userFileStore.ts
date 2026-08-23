@@ -216,7 +216,6 @@ export const useFileStore = create<IFile>((set, getState) => {
         ...state,
         files: state.files.map((obj) => {
           const data = responseData?.data[0];
-          console.log(obj.unique_token === data.unique_token);
           if (obj.unique_token === data.unique_token) {
             obj.filename = data.filename;
             return obj;
