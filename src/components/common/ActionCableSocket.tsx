@@ -8,7 +8,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 const ActionCableSocket = () => {
   const { auth } = useAuthStore();
-  const token = auth.accessToken ?? getAuthTokenCookie();
+  const token = auth.accessToken || getAuthTokenCookie();
   const { subscription: folderSubscribe, receivedData: folderReceivedData } =
     useActionCable('FolderChannel', String(token));
   const { subscription: fileSubscribe, receivedData: fileReceivedData } =

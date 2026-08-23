@@ -17,7 +17,6 @@ interface IProps {
 }
 
 const DropdownOption = ({
-  object_parent_id,
   object_id,
   object_name,
   object_type,

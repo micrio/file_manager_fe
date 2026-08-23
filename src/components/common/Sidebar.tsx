@@ -1,4 +1,3 @@
-import { Label } from '@radix-ui/react-label';
 import { Button } from '../ui/button';
 import { Home, Folder, Trash2, LogOut } from 'lucide-react';
 
@@ -12,7 +11,7 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
   const NAV_ITEMS = [
     { name: "Home", path: "/home", icon: <Home className="w-4 h-4" /> },
     { name: "My Storage", path: "/storage", icon: <Folder className="w-4 h-4" /> },
-    { name: "Trash", path: "/", icon: <Trash2 className="w-4 h-4" /> },
+    { name: "Trash", path: "/trash", icon: <Trash2 className="w-4 h-4" /> },
   ];
 
   return (

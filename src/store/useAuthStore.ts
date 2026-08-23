@@ -42,7 +42,7 @@ interface IAuth {
   auth: {
     accessToken: string | null;
     refreshToken: string | null;
-    getHeaderToken: () => { Authorization: '' };
+    getHeaderToken: () => { Authorization: string };
     isAuthenticated: () => boolean;
   };
   signin: {
@@ -78,9 +78,9 @@ interface IAuth {
 
 export const useAuthStore = create<IAuth>((set, getState) => {
   const auth = {
-    accessToken: '',
-    refreshToken: '',
-    getHeaderToken: () => { return { Authorization: "" } },
+    accessToken: null as string | null,
+    refreshToken: null as string | null,
+    getHeaderToken: () => ({ Authorization: "" }),
     isAuthenticated: () => false,
   };
 
@@ -160,24 +160,27 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     },
 
     auth: {
+      ...initialState.auth,
       getHeaderToken: () => {
+        const token = getState().auth.accessToken || getAuthTokenCookie() || '';
         return {
-          Authorization: getState().auth.accessToken ?? getAuthTokenCookie(),
+          Authorization: token,
         };
       },
 
       isAuthenticated: () => {
-        return getAuthTokenCookie() && getAuthUserCookie();
+        return Boolean(getAuthTokenCookie() && getAuthUserCookie());
       },
     },
 
     signin: {
+      ...initialState.signin,
       initializeState: () => {
         set((state) => ({
           ...state,
           signin: {
             ...state.signin,
-            ...initialState,
+            ...initialState.signin,
           },
         }));
       },
@@ -225,6 +228,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     },
 
     signup: {
+      ...initialState.signup,
       initializeState: () =>
         set((state) => ({
           ...state,
@@ -286,12 +290,12 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     },
 
     refreshToken: {
+      ...initialState.refreshToken,
       request: async () => {
         const refreshHeader = {
           headers: {
-            Authorization: `Bearer ${
-              getState().auth.refreshToken ?? getRefreshTokenCookie()
-            }`,
+            Authorization: `Bearer ${getState().auth.refreshToken ?? getRefreshTokenCookie()
+              }`,
           },
         };
 
@@ -319,6 +323,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     },
 
     api: {
+      ...initialState.api,
       getRequest: async (path: string) => {
         return await axiosConfig
           .get(path, { headers: getState().auth.getHeaderToken() })
@@ -381,7 +386,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
           });
       },
 
-      deleteRequest: async(path: string, options?: unknown) => {
+      deleteRequest: async (path: string, options?: unknown) => {
         const headers = getState().auth.getHeaderToken();
 
         options && Object.assign(headers, options);

@@ -3,14 +3,14 @@ import { useParams } from 'react-router-dom';
 
 import FolderFileList from '@/components/folders/FolderFileList';
 import { useFoldersStore } from '@/store/useFolderStore';
-import { FOLDER_DEFAULT_PARAM } from '@/constants/apis';
+import { FOLDER_TRASHED_PARAM } from '@/constants/apis';
 
-const Storage = () => {
+const Trash = () => {
   const { contents, getFoldersContent } = useFoldersStore();
   const { id } = useParams();
 
   useEffect(() => {
-    getFoldersContent(FOLDER_DEFAULT_PARAM, id);
+    getFoldersContent(FOLDER_TRASHED_PARAM, id);
   }, [id, getFoldersContent]);
 
   return (
@@ -20,4 +20,4 @@ const Storage = () => {
   );
 };
 
-export default Storage;
+export default Trash;

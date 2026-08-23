@@ -52,9 +52,9 @@ export interface IRemovedFileSocketData {
 }
 
 interface IFile {
-  files: [IFileData] | [];
+  files: IFileData[];
   getFileList: (uniqueToken?: string) => void;
-  getFileUrl: (uniqueToken: string) => IFileUrlResponse;
+  getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
   addFileToFileList: (data: unknown) => void;
   uploadFile: {
     folderUniqueToken: string | null;
@@ -76,7 +76,7 @@ export const useFileStore = create<IFile>((set, getState) => {
   const initialState = {
     files: [],
     getFileList: () => null,
-    getFileUrl: () => null,
+    getFileUrl: async () => ({} as IFileUrlResponse),
     addFileToFileList: () => null,
     uploadFile: {
       folderUniqueToken: '',
@@ -122,7 +122,7 @@ export const useFileStore = create<IFile>((set, getState) => {
       await useAuthStore.getState().api.getRequest(url);
 
       const response = useAuthStore.getState().api.data as AxiosResponse;
-      const responseData = response.data as IFileListResponse;
+      const responseData = response.data as IFileUrlResponse;
 
       return responseData;
     },
@@ -137,6 +137,7 @@ export const useFileStore = create<IFile>((set, getState) => {
     },
 
     uploadFile: {
+      ...initialState.uploadFile,
       setFolderUniqueToken: (token: string | null) =>
         set((state) => ({
           ...state,
@@ -166,6 +167,7 @@ export const useFileStore = create<IFile>((set, getState) => {
     },
 
     renameFile: {
+      ...initialState.renameFile,
       setNewPathName: (newPathName: string) => {
         set((state) => ({
           ...state,

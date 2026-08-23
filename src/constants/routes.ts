@@ -4,5 +4,6 @@ export const ROUTES = {
   signup: '/signup',
   home: '/home',
   storage: '/storage',
-  storageWithId: '/storage/:id'
+  storageWithId: '/storage/:id',
+  trash: '/trash'
 };

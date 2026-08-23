@@ -22,7 +22,7 @@ export const useActionCable = (channelName: string, token: string): HookReturnTy
 
   useEffect(() => {
     // Prevent duplication subscription initialization
-    if(!consumer.current) {
+    if (!consumer.current) {
       consumer.current = ActionCable.createConsumer(`ws://localhost:3000/cable?token=${token}`);
     }
 

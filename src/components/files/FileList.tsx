@@ -15,7 +15,7 @@ import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
 import { FILE_REMOVED, FILE_RENAMED } from '@/constants/socketActions';
 
 interface IProps {
-  files: [IFileData] | [];
+  files: IFileData[];
 }
 
 interface FileLogoProp {

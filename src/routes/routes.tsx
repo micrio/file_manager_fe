@@ -1,5 +1,4 @@
 import {
-  Navigate,
   RouterProvider,
   createBrowserRouter,
 } from "react-router-dom";
@@ -10,6 +9,7 @@ import Signup from '@/pages/Auth/Signup';
 import Signin from '@/pages/Auth/Signin';
 import Home from '@/pages/Home/Home';
 import Storage from '@/pages/Storage/Storage';
+import Trash from "@/pages/Trash/Trash";
 
 import { ROUTES } from "@/constants/routes";
 import NotFound from "@/components/common/NotFound";
@@ -71,6 +71,16 @@ const Routes = () => {
               <PrivateRoute>
                 <DefaultLayout>
                   <Storage />
+                </DefaultLayout>
+              </PrivateRoute>
+            ),
+          },
+          {
+            path: ROUTES.trash,
+            element: (
+              <PrivateRoute>
+                <DefaultLayout>
+                  <Trash />
                 </DefaultLayout>
               </PrivateRoute>
             ),

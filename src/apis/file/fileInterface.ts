@@ -9,7 +9,7 @@ export interface IFileData {
 }
 
 export interface IFileListResponse {
-  data: [IFileData];
+  data: IFileData[];
 }
 
 export interface IFileUrlResponse {

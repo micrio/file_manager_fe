@@ -17,7 +17,7 @@ import { FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
 
 interface IProps {
-  folders: [IFolderData] | [];
+  folders: IFolderData[];
 }
 
 const FolderList = ({ folders }: IProps) => {
@@ -51,7 +51,6 @@ const FolderList = ({ folders }: IProps) => {
     receivedData,
     updateFolderPath,
     id,
-    renameFolder.parentFolderToken,
     removeFolderPath,
   ]);
 

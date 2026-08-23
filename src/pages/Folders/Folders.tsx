@@ -7,13 +7,15 @@ import FileList from '@/components/files/FileList';
 import { useFoldersStore } from '@/store/useFolderStore';
 import { useFileStore } from '@/store/userFileStore';
 
+import { FOLDER_TRASHED_PARAM } from '@/constants/apis';
+
 const Folders = () => {
   const { folders, getFoldersList } = useFoldersStore();
   const { files, getFileList } = useFileStore();
   const { id } = useParams();
 
   useEffect(() => {
-    getFoldersList(id);
+    getFoldersList(FOLDER_TRASHED_PARAM, id);
   }, [id, getFoldersList]);
 
   useEffect(() => {

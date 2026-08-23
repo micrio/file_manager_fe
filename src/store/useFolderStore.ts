@@ -4,13 +4,23 @@ import { AxiosResponse } from 'axios';
 import { useAuthStore } from './useAuthStore';
 import {
   IFolderData,
-  IFolderListResponse
+  IFolderContentData,
+  IFolderListResponse,
+  IFolderContentResponse
 } from '@/apis/folder/folderInterface';
-import { FOLDERS_BASE_API, FOLDERS_REMOVE_FOLDER_API, FOLDERS_RENAME_API } from '@/constants/apis';
+import {
+  FOLDERS_BASE_API,
+  FOLDERS_CONTENT_API,
+  FOLDERS_REMOVE_FOLDER_API,
+  FOLDERS_RENAME_API,
+  FOLDERS_TRASH_FOLDER_API,
+} from '@/constants/apis';
 
 interface IFolder {
-  folders: [IFolderData] | [];
-  getFoldersList: (uniqueToken?: string) => void;
+  folders: IFolderData[];
+  contents: IFolderContentData[];
+  getFoldersList: (type: string, uniqueToken?: string) => void;
+  getFoldersContent: (type: string, uniqueToken?: string) => void;
   createFolder: {
     pathName: string | null;
     parentFolderToken: string | null;
@@ -27,12 +37,14 @@ interface IFolder {
   };
   renameFolderRequest: () => void;
   updateFolderPath: (data: unknown) => void;
+  trashFolderRequest: (uniqueToken: string) => void;
+  trashFolderPath: (data: unknown) => void;
   removeFolderRequest: (uniqueToken: string) => void;
   removeFolderPath: (data: unknown) => void;
 }
 
 export interface ICreatedFolderSocketData {
-  action: string,
+  action: string;
   data: [
     {
       id: number;
@@ -58,6 +70,19 @@ export interface IRenamedFolderSocketData {
 }
 
 
+export interface ITrashedFolderSocketData {
+  action: string;
+  data: [
+    {
+      id: number;
+      unique_token: string;
+      path: string;
+      parent_folder_id: number;
+      created_at: string;
+    }
+  ];
+}
+
 export interface IRemovedFolderSocketData {
   action: string;
   data: [
@@ -74,7 +99,9 @@ export interface IRemovedFolderSocketData {
 export const useFoldersStore = create<IFolder>((set, getState) => {
   const initialState = {
     folders: [],
+    contents: [],
     getFolderList: () => null,
+    getFoldersContent: () => null,
     createFolder: {
       pathName: '',
       uniqueToken: '',
@@ -100,6 +127,7 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
     createFolderRequest: () => null,
     addSingleFolderToList: () => null,
     renameFolder: {
+      uniqueToken: null,
       newPathName: null,
       setUniqueToken: (uniqueToken: string) =>
         set((state) => ({
@@ -120,17 +148,18 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
     },
     renameFolderRequest: () => null,
     updateFolderPath: () => null,
+    trashFolderRequest: () => null,
+    trashFolderPath: () => null,
     removeFolderRequest: () => null,
     removeFolderPath: () => null
   };
 
   return {
     ...initialState,
-
-    getFoldersList: async (uniqueToken?: string) => {
+    getFoldersList: async (type: string, uniqueToken?: string) => {
       const url = !uniqueToken
-        ? FOLDERS_BASE_API
-        : FOLDERS_BASE_API + `?unique_token=${uniqueToken}`;
+        ? FOLDERS_BASE_API + `?type=${type}`
+        : FOLDERS_BASE_API + `?unique_token=${uniqueToken}&type=${type}`;
 
       await useAuthStore.getState().api.getRequest(url);
 
@@ -141,6 +170,23 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       set((state) => ({
         ...state,
         folders: folders,
+      }));
+    },
+
+    getFoldersContent: async (type: string, uniqueToken?: string) => {
+      const url = !uniqueToken
+        ? FOLDERS_CONTENT_API + `?type=${type}`
+        : FOLDERS_CONTENT_API + `?unique_token=${uniqueToken}&type=${type}`;
+
+      await useAuthStore.getState().api.getRequest(url);
+
+      const response = useAuthStore.getState().api.data as AxiosResponse;
+      const responseData = response.data as IFolderContentResponse;
+      const contents = responseData?.data ?? [];
+
+      set((state) => ({
+        ...state,
+        contents: contents,
       }));
     },
 
@@ -157,10 +203,21 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
     addSingleFolderToList(data: unknown) {
       const responseData = data as ICreatedFolderSocketData;
+      const folderItem = responseData?.data[0];
+
+      if (!folderItem) return;
 
       set((state) => ({
         ...state,
-        folders: [responseData?.data[0], ...state.folders],
+        folders: [folderItem, ...state.folders],
+        contents: [
+          {
+            ...folderItem,
+            full_path: folderItem.path ? folderItem.path + "/" : null,
+            type: "folder",
+          } as IFolderContentData,
+          ...state.contents,
+        ],
       }));
     },
 
@@ -179,17 +236,53 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
     updateFolderPath: async (data: unknown) => {
       const responseData = data as IRenamedFolderSocketData;
+      const updatedItem = responseData?.data[0];
+
+      if (!updatedItem) return;
 
       set((state) => ({
         ...state,
         folders: state.folders.map((obj) => {
-          if (obj.unique_token === responseData?.data[0].unique_token) {
-            obj.path = responseData?.data[0].path;
-            return obj;
+          if (obj.unique_token === updatedItem.unique_token) {
+            return {
+              ...obj,
+              path: updatedItem.path,
+            };
           }
 
           return obj;
         }),
+        contents: state.contents.map((obj) => {
+          if (obj.unique_token === updatedItem.unique_token) {
+            return {
+              ...obj,
+              path: updatedItem.path,
+            } as IFolderContentData;
+          }
+
+          return obj;
+        }),
+      }));
+    },
+
+    trashFolderRequest: async (unique_token: string) => {
+      const url = FOLDERS_TRASH_FOLDER_API + '?unique_token=' + unique_token;
+
+      await useAuthStore.getState().api.deleteRequest(url);
+    },
+
+    trashFolderPath: (data: unknown) => {
+      const response = data as IRemovedFolderSocketData;
+      const responseData = response.data[0];
+
+      set((state) => ({
+        ...state,
+        folders: state.folders.filter(
+          (item) => item.unique_token !== responseData.unique_token
+        ),
+        contents: state.contents.filter(
+          (item) => item.unique_token !== responseData.unique_token
+        ),
       }));
     },
 
@@ -204,7 +297,11 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       const responseData = response.data[0];
 
       set((state) => ({
+        ...state,
         folders: state.folders.filter(
+          (item) => item.unique_token !== responseData.unique_token
+        ),
+        contents: state.contents.filter(
           (item) => item.unique_token !== responseData.unique_token
         ),
       }));
