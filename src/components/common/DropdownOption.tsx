@@ -73,7 +73,11 @@ const DropdownOption = ({
     }
 
     if (isObjectTypeFile) {
-      await removeFileRequest(object_id);
+      if (isTrashRoute) {
+        await trashFolderRequest(object_id);
+      } else {
+        await removeFileRequest(object_id);
+      }
     }
 
     setOpenDeleteDialog(false);

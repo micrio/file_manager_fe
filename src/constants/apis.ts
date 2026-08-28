@@ -13,4 +13,5 @@ export const FOLDER_TRASHED_PARAM = "trashed"
 export const FILES_BASE_API = '/file_uploads';
 export const FILES_GET_URL_API = '/file_uploads/view_file';
 export const FILE_RENAME_API = '/file_uploads/rename';
+export const FILE_TRASH_FILE_API = '/file_uploads/trash_file';
 export const FILE_REMOVE_FILE_API = '/file_uploads/remove_file';

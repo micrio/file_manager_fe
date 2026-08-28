@@ -83,15 +83,22 @@ const UploadFile = () => {
             <FormField
               control={form.control}
               name="files"
-              render={() => (
+              render={({ field: { onChange, onBlur, name, ref } }) => (
                 <FormItem>
-                  <FormLabel></FormLabel>
+                  <FormLabel />
                   <FormControl>
                     <Input
-                      {...filesRef}
-                      className="h-18 leading-5"
                       type="file"
-                      onChange={() => setDisableUpload(false)}
+                      className="h-18 leading-5"
+                      name={name}
+                      ref={ref}
+                      onBlur={onBlur}
+                      onChange={(e) => {
+                        // Pass the FileList directly to React Hook Form
+                        onChange(e.target.files);
+                        // Enable upload button as soon as a file is chosen
+                        setDisableUpload(!e.target.files || e.target.files.length === 0);
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
