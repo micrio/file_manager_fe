@@ -29,6 +29,28 @@ interface FileLogoProp {
   file_extension: string | null;
 }
 
+function formatCreatedAt(createdAt: string | null): string {
+  if (!createdAt) return '';
+
+  const parts = new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).formatToParts(new Date(createdAt));
+
+  const values: Record<string, string> = {};
+  for (const part of parts) {
+    if (part.type !== 'literal') {
+      values[part.type] = part.value;
+    }
+  }
+
+  return `${values.weekday}, ${values.day}, ${values.year} ${values.hour}:${values.minute} ${values.dayPeriod}`;
+}
+
 const FolderFileList = ({ items = [] }: IProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -180,7 +202,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
                       {item.filename + '.' + item.file_extension}
                     </Label>
                     <span className="text-xs text-slate-400 font-medium whitespace-nowrap mr-2">
-                      {new Date(item.created_at).toLocaleDateString()}
+                      {formatCreatedAt(item.created_at)}
                     </span>
                     <Popover>
                       <PopoverTrigger
