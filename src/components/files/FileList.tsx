@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import DropdownOption from '../common/DropdownOption';
 
-import { IRenamedFileSocketData, useFileStore } from '@/store/userFileStore';
+import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 import { useSocketStore } from '@/store/useSocketStore';
 
@@ -31,7 +31,7 @@ const FileList = ({ files }: IProps) => {
   const { receivedData } = useSocketStore();
 
   useEffect(() => {
-    const responseData = receivedData as IRenamedFileSocketData;
+    const responseData = receivedData as unknown as FileSocketData;
     const isFileRenamedAction =
       responseData && responseData.action === FILE_RENAMED;
 
@@ -39,11 +39,11 @@ const FileList = ({ files }: IProps) => {
       responseData && responseData.action === FILE_REMOVED;
 
     if (isFileRenamedAction) {
-      updateFileName(receivedData);
+      updateFileName(responseData);
     }
 
     if (isFileRemovedAction) {
-      removeFilePath(receivedData);
+      removeFilePath(responseData);
     }
   }, [receivedData, updateFileName, removeFilePath]);
 

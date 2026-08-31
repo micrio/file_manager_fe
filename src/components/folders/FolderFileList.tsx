@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import DropdownOption from '../common/DropdownOption';
 
 import { useAuthStore } from '@/store/useAuthStore';
-import { useFileStore } from '@/store/userFileStore';
+import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 import { useSocketStore } from '@/store/useSocketStore';
@@ -47,9 +47,9 @@ const FolderFileList = ({ items = [] }: IProps) => {
     if (!responseData) return;
 
     if (responseData.action === FILE_RENAMED) {
-      updateFileName(responseData);
+      updateFileName(responseData as unknown as FileSocketData);
     } else if (responseData.action === FILE_REMOVED) {
-      removeFilePath(responseData);
+      removeFilePath(responseData as unknown as FileSocketData);
     } else if (responseData.action === FOLDER_RENAMED) {
       updateFolderPath(responseData);
     } else if (responseData.action === FOLDER_REMOVED) {

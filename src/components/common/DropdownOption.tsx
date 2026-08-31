@@ -64,7 +64,11 @@ const DropdownOption = ({
     }
 
     if (isObjectTypeFile) {
-      await renameFile.request(object_id);
+      const result = await renameFile.request(object_id);
+      if (!result.ok) {
+        toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
+        return;
+      }
     }
 
     setOpenRenameDialog(false);
@@ -83,10 +87,13 @@ const DropdownOption = ({
     }
 
     if (isObjectTypeFile) {
-      if (isTrashRoute) {
-        await removeFileRequest(object_id);
-      } else {
-        await trashFileRequest(object_id);
+      const result = isTrashRoute
+        ? await removeFileRequest(object_id)
+        : await trashFileRequest(object_id);
+
+      if (!result.ok) {
+        toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
+        return;
       }
     }
 

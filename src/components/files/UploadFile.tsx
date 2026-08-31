@@ -10,11 +10,15 @@ import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
-import { useFileStore } from '@/store/userFileStore';
+import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { FILE_CREATED } from '@/constants/socketActions';
-import { TOAST_VARIANT_GHOST } from '@/constants/components/ui/toastConstant';
+import {
+  TOAST_VARIANT_DEFAULT,
+  TOAST_VARIANT_DESTRUCTIVE,
+  TOAST_VARIANT_GHOST,
+} from '@/constants/components/ui/toastConstant';
+import { useToast } from '@/components/ui/use-toast';
 import { useSocketStore } from '@/store/useSocketStore';
-import { IReceivedData } from '@/hooks/useActionCable';
 import { IFileData } from '@/apis/file/fileInterface';
 
 const UploadFileSchema = z.object({
@@ -31,6 +35,7 @@ const UploadFile = () => {
   const { id } = useParams();
   const { uploadFile, addFileToFileList } = useFileStore();
   const { receivedData } = useSocketStore();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof UploadFileSchema>>({
     resolver: zodResolver(UploadFileSchema),
@@ -44,7 +49,7 @@ const UploadFile = () => {
   }, [id]);
 
   useEffect(() => {
-    const response = receivedData as IReceivedData;
+    const response = receivedData as unknown as FileSocketData;
     const isFileCreation = response && response.action === FILE_CREATED;
 
     if (isFileCreation) {
@@ -60,10 +65,16 @@ const UploadFile = () => {
   }, [id, receivedData, uploadFile.folderUniqueToken, addFileToFileList]);
 
   const onSubmit = async (values: z.infer<typeof UploadFileSchema>) => {
-    await uploadFile.request(values.files);
+    const result = await uploadFile.request(values.files);
 
-    // Use success on later improvements to close dialog
+    if (!result.ok) {
+      toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
+      return;
+    }
+
+    toast({ variant: TOAST_VARIANT_DEFAULT, title: 'File uploaded successfully' });
     setOpenDialog(false);
+    setDisableUpload(true);
   };
 
   return (

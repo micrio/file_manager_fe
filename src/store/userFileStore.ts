@@ -1,9 +1,8 @@
 import { create } from 'zustand';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 
 import { useAuthStore } from './useAuthStore';
-
-import { IFileData, IFileListResponse, IFileUrlResponse } from '@/apis/file/fileInterface';
+import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
 import {
   FILES_BASE_API,
   FILES_GET_URL_API,
@@ -12,149 +11,107 @@ import {
   FILE_RENAME_API,
 } from '@/constants/apis';
 
-export interface ICreatedFileSocketData {
-  action: string;
-  data: [
-    {
-      id: number | null;
-      unique_token: string | null;
-      name: string | null;
-      filename: string | null;
-      file_extension: string | null;
-      folder_id: number | null;
-      created_at: string;
-    }
-  ];
+export type MutationResult = {
+  ok: boolean;
+  data?: unknown;
+  message?: string;
+};
+
+type ResponseEnvelope = {
+  success?: boolean;
+  data?: unknown;
+  meta?: { error?: string; message?: string };
+};
+
+function extractErrorMessage(err: AxiosError): string {
+  const body = err.response?.data as
+    | {
+        meta?: { error?: string; message?: string };
+        error?: string;
+        message?: string;
+      }
+    | undefined;
+
+  return (
+    body?.meta?.error ??
+    body?.meta?.message ??
+    body?.error ??
+    body?.message ??
+    'Something went wrong'
+  );
 }
 
-export interface IRenamedFileSocketData {
-  action: string;
-  data: [
-    {
-      id: number | null;
-      unique_token: string | null;
-      name: string | null;
-      filename: string | null;
-      file_extension: string | null;
-      folder_id: number | null;
-      created_at: string;
+function requestWithResult(promise: Promise<unknown>): Promise<MutationResult> {
+  return promise.then((response) => {
+    const result = response as AxiosResponse | AxiosError;
+
+    if (result instanceof AxiosError) {
+      return { ok: false, message: extractErrorMessage(result) };
     }
-  ];
+
+    const envelope = result.data as ResponseEnvelope | undefined;
+
+    if (envelope?.success === false) {
+      return {
+        ok: false,
+        message:
+          envelope.meta?.error ?? envelope.meta?.message ?? 'Something went wrong',
+      };
+    }
+
+    return { ok: true, data: envelope?.data };
+  });
 }
 
-export interface IRemovedFileSocketData {
+export interface FileSocketData {
   action: string;
-  data: [
-    {
-      id: number | null;
-      unique_token: string | null;
-      name: string | null;
-      filename: string | null;
-      file_extension: string | null;
-      folder_id: number | null;
-      created_at: string;
-    }
-  ];
+  data: Array<{
+    id: number | null;
+    unique_token: string | null;
+    name: string | null;
+    filename: string | null;
+    file_extension: string | null;
+    folder_id: number | null;
+    created_at: string;
+  }>;
 }
 
 interface IFile {
   files: IFileData[];
-  getFileList: (uniqueToken?: string) => void;
+  getFileList: (uniqueToken?: string) => Promise<MutationResult>;
   getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
-  addFileToFileList: (data: unknown) => void;
+  addFileToFileList: (data: FileSocketData) => void;
   uploadFile: {
     folderUniqueToken: string | null;
     setFolderUniqueToken: (uniqueToken: string | null) => void;
-    request: (files: FileList) => void;
+    request: (files: FileList) => Promise<MutationResult>;
   };
   renameFile: {
-    newPathName: string | null;
     folderUniqueToken: string | null;
+    newPathName: string | null;
+    setFolderUniqueToken: (uniqueToken: string | null) => void;
     setNewPathName: (newPath: string) => void;
-    request: (file_token: string) => void;
+    request: (file_token: string) => Promise<MutationResult>;
   };
-  updateFileName: (data: unknown) => void;
-  removeFilePath: (data: unknown) => void;
-  trashFileRequest: (uniqueToken: string) => void,
-  removeFileRequest: (uniqueToken: string) => void,
+  updateFileName: (data: FileSocketData) => void;
+  trashFileRequest: (uniqueToken: string) => Promise<MutationResult>;
+  removeFileRequest: (uniqueToken: string) => Promise<MutationResult>;
+  removeFilePath: (data: FileSocketData) => void;
 }
 
 export const useFileStore = create<IFile>((set, getState) => {
-  const initialState = {
-    files: [],
-    getFileList: () => null,
-    getFileUrl: async () => ({} as IFileUrlResponse),
-    addFileToFileList: () => null,
-    uploadFile: {
-      folderUniqueToken: '',
-      setFolderUniqueToken: () => null,
-      request: () => null,
-    },
-    renameFile: {
-      newPathName: '',
-      folderUniqueToken: '',
-      setNewPathName: () => null,
-      request: () => null,
-    },
-    updateFileName: () => null,
-    removeFileRequest: () => null,
-    removeFilePath: () => null
-  };
-
   return {
-    ...initialState,
-
-    getFileList: async (uniqueToken?: string) => {
-      const url = !uniqueToken
-        ? FILES_BASE_API
-        : FILES_BASE_API + `?folder_unique_token=${uniqueToken}`;
-
-      await useAuthStore.getState().api.getRequest(url);
-
-      const response = useAuthStore.getState().api.data as AxiosResponse;
-      const responseData = response.data as IFileListResponse;
-      const files = responseData?.data ?? [];
-
-      set((state) => ({
-        ...state,
-        files: files,
-      }));
-    },
-
-    getFileUrl: async (uniqueToken: string) => {
-      const url = !uniqueToken
-        ? FILES_GET_URL_API
-        : FILES_GET_URL_API + `?unique_token=${uniqueToken}`;
-
-      await useAuthStore.getState().api.getRequest(url);
-
-      const response = useAuthStore.getState().api.data as AxiosResponse;
-      const responseData = response.data as IFileUrlResponse;
-
-      return responseData;
-    },
-
-    addFileToFileList: (data: unknown) => {
-      const responseData = data as ICreatedFileSocketData;
-
-      set((state) => ({
-        ...state,
-        files: [responseData?.data[0], ...state.files],
-      }));
-    },
+    files: [],
 
     uploadFile: {
-      ...initialState.uploadFile,
-      setFolderUniqueToken: (token: string | null) =>
+      folderUniqueToken: '',
+      setFolderUniqueToken: (uniqueToken: string | null) =>
         set((state) => ({
           ...state,
-          uploadFile: {
-            ...state.uploadFile,
-            folderUniqueToken: token,
-          },
+          uploadFile: { ...state.uploadFile, folderUniqueToken: uniqueToken },
         })),
 
-      request: async (files: FileList) => {
+      request: async (files: FileList): Promise<MutationResult> => {
         const formData = new FormData();
         const headerOptions = {
           'Content-Type': 'multipart/form-data',
@@ -167,35 +124,28 @@ export const useFileStore = create<IFile>((set, getState) => {
 
         formData.append('file_upload[file]', files[0]);
 
-        useAuthStore
-          .getState()
-          .api.postRequest(FILES_BASE_API, formData, headerOptions);
+        return requestWithResult(
+          useAuthStore.getState().api.postRequest(FILES_BASE_API, formData, headerOptions)
+        );
       },
     },
 
     renameFile: {
-      ...initialState.renameFile,
-      setNewPathName: (newPathName: string) => {
+      folderUniqueToken: '',
+      newPathName: '',
+      setFolderUniqueToken: (uniqueToken: string | null) =>
         set((state) => ({
           ...state,
-          renameFile: {
-            ...state.renameFile,
-            newPathName: newPathName,
-          },
-        }));
-      },
+          renameFile: { ...state.renameFile, folderUniqueToken: uniqueToken },
+        })),
 
-      setFolderUniqueToken: (token: string | null) => {
+      setNewPathName: (newPathName: string) =>
         set((state) => ({
           ...state,
-          renameFile: {
-            ...state.renameFile,
-            folderUniqueToken: token,
-          },
-        }));
-      },
+          renameFile: { ...state.renameFile, newPathName: newPathName },
+        })),
 
-      request: async (file_token: string) => {
+      request: async (file_token: string): Promise<MutationResult> => {
         const folderToken = getState().renameFile.folderUniqueToken;
         const bodyData = {
           file_upload: {
@@ -205,55 +155,95 @@ export const useFileStore = create<IFile>((set, getState) => {
         };
 
         if (folderToken !== null) {
-          const folderUniqueToken = {
-            folder_unique_token: folderToken,
-          };
-
-          Object.assign(bodyData, folderUniqueToken);
+          Object.assign(bodyData, { folder_unique_token: folderToken });
         }
 
-        useAuthStore.getState().api.putRequest(FILE_RENAME_API, bodyData);
+        return requestWithResult(
+          useAuthStore.getState().api.putRequest(FILE_RENAME_API, bodyData)
+        );
       },
     },
 
-    updateFileName: async (data: unknown) => {
-      const responseData = data as IRenamedFileSocketData;
+    getFileList: async (uniqueToken?: string): Promise<MutationResult> => {
+      const url = uniqueToken
+        ? `${FILES_BASE_API}?folder_unique_token=${uniqueToken}`
+        : FILES_BASE_API;
+
+      const result = await requestWithResult(
+        useAuthStore.getState().api.getRequest(url)
+      );
+
+      if (result.ok) {
+        set((state) => ({
+          ...state,
+          files: (result.data as IFileData[]) ?? [],
+        }));
+      }
+
+      return result;
+    },
+
+    getFileUrl: async (uniqueToken: string): Promise<IFileUrlResponse> => {
+      const url = uniqueToken
+        ? `${FILES_GET_URL_API}?unique_token=${uniqueToken}`
+        : FILES_GET_URL_API;
+
+      const result = await requestWithResult(
+        useAuthStore.getState().api.getRequest(url)
+      );
+
+      return result.ok
+        ? { data: result.data as IFileUrlResponse['data'] }
+        : { data: { file_url: '', file_name: '', file_extension: '' } };
+    },
+
+    addFileToFileList: (data: FileSocketData) => {
+      const item = data?.data[0];
+
+      if (!item) return;
+
+      set((state) => ({ ...state, files: [item, ...state.files] }));
+    },
+
+    updateFileName: (data: FileSocketData) => {
+      const item = data?.data[0];
+
+      if (!item) return;
 
       set((state) => ({
-        ...state,
-        files: state.files.map((obj) => {
-          const data = responseData?.data[0];
-          if (obj.unique_token === data.unique_token) {
-            obj.filename = data.filename;
-            return obj;
-          }
-
-          return obj;
-        }),
-      }));
-    },
-
-    trashFileRequest: async (uniqueToken: string) => {
-      const url = FILE_TRASH_FILE_API + "?unique_token=" + uniqueToken;
-
-      await useAuthStore.getState().api.deleteRequest(url);
-    },
-
-    removeFileRequest: async (uniqueToken: string) => {
-      const url = FILE_REMOVE_FILE_API + "?unique_token=" + uniqueToken;
-
-      await useAuthStore.getState().api.postRequest(url, { file_upload: { unique_token: uniqueToken } });
-    },
-
-    removeFilePath: (data: unknown) => {
-      const response = data as IRemovedFileSocketData;
-      const responseData = response.data[0];
-
-      set((state) => ({
-        files: state.files.filter(
-          (item) => item.unique_token !== responseData.unique_token
+        files: state.files.map((obj) =>
+          obj.unique_token === item.unique_token
+            ? { ...obj, name: item.name, filename: item.filename }
+            : obj
         ),
       }));
-    }
+    },
+
+    trashFileRequest: async (uniqueToken: string): Promise<MutationResult> => {
+      return requestWithResult(
+        useAuthStore.getState().api.deleteRequest(
+          `${FILE_TRASH_FILE_API}?unique_token=${uniqueToken}`
+        )
+      );
+    },
+
+    removeFileRequest: async (uniqueToken: string): Promise<MutationResult> => {
+      return requestWithResult(
+        useAuthStore.getState().api.postRequest(
+          FILE_REMOVE_FILE_API,
+          { file_upload: { unique_token: uniqueToken } }
+        )
+      );
+    },
+
+    removeFilePath: (data: FileSocketData) => {
+      const item = data?.data[0];
+
+      if (!item) return;
+
+      set((state) => ({
+        files: state.files.filter((file) => file.unique_token !== item.unique_token),
+      }));
+    },
   };
 });
