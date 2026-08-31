@@ -1,5 +1,6 @@
 import { Button } from '../ui/button';
 import { Home, Folder, Trash2, LogOut } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 import { APP } from '@/constants/app';
 import { ThemeToggle } from './ThemeToggle';
@@ -9,6 +10,9 @@ interface ISidebar {
 }
 
 const Sidebar = ({ handleLogout }: ISidebar) => {
+  const { pathname } = useLocation();
+  const isActivePath = (path: string) => pathname === path;
+
   const NAV_ITEMS = [
     { name: "Home", path: "/home", icon: <Home className="w-4 h-4" /> },
     { name: "My Storage", path: "/storage", icon: <Folder className="w-4 h-4" /> },
@@ -25,14 +29,19 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
 
         <nav className="flex flex-col gap-4">
           {NAV_ITEMS.map((item) => (
-            <a
+            <Link
               key={item.name}
-              href={item.path}
-              className="flex items-center gap-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              to={item.path}
+              replace
+              className={`flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                isActivePath(item.path)
+                  ? 'bg-neutral-100 text-foreground dark:bg-neutral-800'
+                  : 'text-muted-foreground hover:bg-neutral-100 hover:text-foreground dark:hover:bg-neutral-800'
+              }`}
             >
               {item.icon}
               {item.name}
-            </a>
+            </Link>
           ))}
         </nav>
 
