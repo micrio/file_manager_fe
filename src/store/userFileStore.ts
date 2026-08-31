@@ -93,6 +93,7 @@ interface IFile {
     request: (file_token: string) => Promise<MutationResult>;
   };
   updateFileName: (data: FileSocketData) => void;
+  updateFileListName: (uniqueToken: string, newName: string) => void;
   trashFileRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFileRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFilePath: (data: FileSocketData) => void;
@@ -201,10 +202,26 @@ export const useFileStore = create<IFile>((set, getState) => {
 
       if (!item) return;
 
+      // Same bridge as updateFilePath: the rename request carries the new base
+      // name in `name`, but the list displays `filename`.
       set((state) => ({
         files: state.files.map((obj) =>
           obj.unique_token === item.unique_token
-            ? { ...obj, name: item.name, filename: item.filename }
+            ? {
+                ...obj,
+                name: item.name,
+                filename: item.name ?? item.filename ?? obj.filename,
+              }
+            : obj
+        ),
+      }));
+    },
+
+    updateFileListName: (uniqueToken: string, newName: string) => {
+      set((state) => ({
+        files: state.files.map((obj) =>
+          obj.unique_token === uniqueToken
+            ? { ...obj, name: newName, filename: newName }
             : obj
         ),
       }));

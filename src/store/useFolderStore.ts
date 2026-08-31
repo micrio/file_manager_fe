@@ -113,6 +113,7 @@ interface IFolder {
   addSingleFolderToList: (data: FolderSocketData) => void;
   addSingleFileToList: (data: FileSocketData) => void;
   updateFilePath: (data: FileSocketData) => void;
+  updateFileContentsName: (uniqueToken: string, newName: string) => void;
   removeFileFromContents: (data: FileSocketData) => void;
   renameFolder: {
     uniqueToken: string | null;
@@ -262,14 +263,33 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
       if (!file) return;
 
+      // A file rename request sends the new base name in `name` (not `filename`),
+      // but the list displays `filename`. Bridge the two: prefer the renamed
+      // `name`, then `filename`, then whatever is already stored.
+      //
+      // Files are rendered as "not a folder", but they arrive with two shapes:
+      // `type: 'file_upload'` straight from the API, and `type: 'file'` after
+      // `addSingleFileToList`. Match on the folder discriminator, not one of
+      // these two string variants, so the row updates regardless of which form
+      // the stored entry uses.
       set((state) => ({
         contents: state.contents.map((item) =>
-          item.type === 'file' && item.unique_token === file.unique_token
+          item.type !== 'folder' && item.unique_token === file.unique_token
             ? {
                 ...item,
-                filename: file.filename ?? item.filename,
-                full_path: file.filename ?? item.full_path,
+                filename: file.name ?? file.filename ?? item.filename,
+                full_path: file.name ?? file.filename ?? item.full_path,
               }
+            : item
+        ),
+      }));
+    },
+
+    updateFileContentsName: (uniqueToken: string, newName: string) => {
+      set((state) => ({
+        contents: state.contents.map((item) =>
+          item.type === 'file' && item.unique_token === uniqueToken
+            ? { ...item, filename: newName }
             : item
         ),
       }));
@@ -282,7 +302,12 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
       set((state) => ({
         contents: state.contents.filter(
-          (item) => item.type !== 'file' || item.unique_token !== file.unique_token
+          // Keep everything that is not a file matching this token. A file can
+          // be `type: 'file_upload'` (from the API) or `type: 'file'`; both are
+          // "not a folder", so match on the folder discriminator rather than
+          // one specific string.
+          (item) =>
+            !(item.type !== 'folder' && item.unique_token === file.unique_token)
         ),
       }));
     },

@@ -23,6 +23,7 @@ const DropdownOption = ({
   object_id,
   object_name,
   object_type,
+  object_parent_id,
 }: IProps) => {
   const location = useLocation();
   const [openRenameDialog, setOpenRenameDialog] = useState<boolean>(false);
@@ -64,10 +65,23 @@ const DropdownOption = ({
     }
 
     if (isObjectTypeFile) {
+      // Set the parent folder token (like folder rename does) so the request
+      // targets the file's real folder, then reflect the new name in the list
+      // immediately — without waiting for the socket broadcast.
+      renameFile.setFolderUniqueToken(object_parent_id ?? null);
+
       const result = await renameFile.request(object_id);
+
       if (!result.ok) {
         toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
         return;
+      }
+
+      const newName = renameFile.newPathName;
+
+      if (newName) {
+        useFoldersStore.getState().updateFileContentsName(object_id, newName);
+        useFileStore.getState().updateFileListName(object_id, newName);
       }
     }
 
