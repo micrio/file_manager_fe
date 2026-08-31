@@ -83,7 +83,7 @@ interface IFile {
   uploadFile: {
     folderUniqueToken: string | null;
     setFolderUniqueToken: (uniqueToken: string | null) => void;
-    request: (files: FileList) => Promise<MutationResult>;
+    request: (files: FileList, folderUniqueToken?: string | null) => Promise<MutationResult>;
   };
   renameFile: {
     folderUniqueToken: string | null;
@@ -111,18 +111,28 @@ export const useFileStore = create<IFile>((set, getState) => {
           uploadFile: { ...state.uploadFile, folderUniqueToken: uniqueToken },
         })),
 
-      request: async (files: FileList): Promise<MutationResult> => {
+      request: async (
+        files: FileList,
+        folderUniqueToken: string | null | undefined = undefined,
+      ): Promise<MutationResult> => {
         const formData = new FormData();
         const headerOptions = {
           'Content-Type': 'multipart/form-data',
         };
-        const folderToken = getState().uploadFile.folderUniqueToken;
+        // An explicit token (e.g. from a drag-and-drop in a specific folder)
+        // wins; otherwise fall back to the store's synced token.
+        const folderToken =
+          folderUniqueToken === undefined
+            ? getState().uploadFile.folderUniqueToken
+            : folderUniqueToken;
 
         if (folderToken) {
           formData.append('file_upload[folder_unique_token]', folderToken);
         }
 
-        formData.append('file_upload[file]', files[0]);
+        for (let index = 0; index < files.length; index++) {
+          formData.append('file_upload[file]', files[index]);
+        }
 
         return requestWithResult(
           useAuthStore.getState().api.postRequest(FILES_BASE_API, formData, headerOptions)
