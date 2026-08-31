@@ -33,8 +33,14 @@ const FolderFileList = ({ items = [] }: IProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { api } = useAuthStore();
-  const { getFileUrl, updateFileName, removeFilePath } = useFileStore();
-  const { renameFolder, updateFolderPath, removeFolderPath } = useFoldersStore();
+  const { getFileUrl } = useFileStore();
+  const {
+    renameFolder,
+    updateFolderPath,
+    removeFolderPath,
+    updateFilePath,
+    removeFileFromContents,
+  } = useFoldersStore();
   const { isFileImage, isFileVideo, isFileDocument } = useFileExtensionCheck();
   const { receivedData } = useSocketStore();
 
@@ -47,15 +53,15 @@ const FolderFileList = ({ items = [] }: IProps) => {
     if (!responseData) return;
 
     if (responseData.action === FILE_RENAMED) {
-      updateFileName(responseData as unknown as FileSocketData);
+      updateFilePath(responseData as unknown as FileSocketData);
     } else if (responseData.action === FILE_REMOVED) {
-      removeFilePath(responseData as unknown as FileSocketData);
+      removeFileFromContents(responseData as unknown as FileSocketData);
     } else if (responseData.action === FOLDER_RENAMED) {
       updateFolderPath(responseData);
     } else if (responseData.action === FOLDER_REMOVED) {
       removeFolderPath(responseData);
     }
-  }, [receivedData, updateFileName, removeFilePath, updateFolderPath, removeFolderPath]);
+  }, [receivedData, updateFilePath, removeFileFromContents, updateFolderPath, removeFolderPath]);
 
   useEffect(() => {
     if (items.length === 0 && api.status == String(API_RESPONSE_CODE.notFound)) {

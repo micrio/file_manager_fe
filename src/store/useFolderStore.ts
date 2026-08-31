@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { AxiosError, AxiosResponse } from 'axios';
 
 import { useAuthStore } from './useAuthStore';
+import type { FileSocketData } from './userFileStore';
 import { IFolderData, IFolderContentData } from '@/apis/folder/folderInterface';
 import {
   FOLDERS_BASE_API,
@@ -110,6 +111,9 @@ interface IFolder {
   };
   createFolderRequest: () => Promise<MutationResult>;
   addSingleFolderToList: (data: FolderSocketData) => void;
+  addSingleFileToList: (data: FileSocketData) => void;
+  updateFilePath: (data: FileSocketData) => void;
+  removeFileFromContents: (data: FileSocketData) => void;
   renameFolder: {
     uniqueToken: string | null;
     newPathName: string | null;
@@ -225,6 +229,61 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
           } as IFolderContentData,
           ...state.contents,
         ],
+      }));
+    },
+
+    // Mirror of addSingleFolderToList for uploaded files: prepend the file as a
+    // `type: 'file'` entry into `contents`, which Storage/Trash render. The
+    // folder socket broadcast is the only mechanism that surfaces a new file, so
+    // without this the uploaded file never appears in the list.
+    addSingleFileToList: (data: FileSocketData) => {
+      const file = data?.data[0];
+
+      if (!file) return;
+
+      set((state) => ({
+        contents: [
+          {
+            ...file,
+            id: file.id ?? 0,
+            unique_token: file.unique_token ?? '',
+            filename: file.filename ?? '',
+            file_extension: file.file_extension ?? '',
+            full_path: file.filename ?? '',
+            type: 'file',
+          } as IFolderContentData,
+          ...state.contents,
+        ],
+      }));
+    },
+
+    updateFilePath: (data: FileSocketData) => {
+      const file = data?.data[0];
+
+      if (!file) return;
+
+      set((state) => ({
+        contents: state.contents.map((item) =>
+          item.type === 'file' && item.unique_token === file.unique_token
+            ? {
+                ...item,
+                filename: file.filename ?? item.filename,
+                full_path: file.filename ?? item.full_path,
+              }
+            : item
+        ),
+      }));
+    },
+
+    removeFileFromContents: (data: FileSocketData) => {
+      const file = data?.data[0];
+
+      if (!file) return;
+
+      set((state) => ({
+        contents: state.contents.filter(
+          (item) => item.type !== 'file' || item.unique_token !== file.unique_token
+        ),
       }));
     },
 

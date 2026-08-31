@@ -80,7 +80,6 @@ interface IFile {
   files: IFileData[];
   getFileList: (uniqueToken?: string) => Promise<MutationResult>;
   getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
-  addFileToFileList: (data: FileSocketData) => void;
   uploadFile: {
     folderUniqueToken: string | null;
     setFolderUniqueToken: (uniqueToken: string | null) => void;
@@ -195,14 +194,6 @@ export const useFileStore = create<IFile>((set, getState) => {
       return result.ok
         ? { data: result.data as IFileUrlResponse['data'] }
         : { data: { file_url: '', file_name: '', file_extension: '' } };
-    },
-
-    addFileToFileList: (data: FileSocketData) => {
-      const item = data?.data[0];
-
-      if (!item) return;
-
-      set((state) => ({ ...state, files: [item, ...state.files] }));
     },
 
     updateFileName: (data: FileSocketData) => {

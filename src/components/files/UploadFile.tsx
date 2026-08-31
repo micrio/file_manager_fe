@@ -11,6 +11,7 @@ import { Button } from '../ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
+import { useFoldersStore } from '@/store/useFolderStore';
 import { FILE_CREATED } from '@/constants/socketActions';
 import {
   TOAST_VARIANT_DEFAULT,
@@ -33,7 +34,8 @@ const UploadFile = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [disableUpload, setDisableUpload] = useState<boolean>(true);
   const { id } = useParams();
-  const { uploadFile, addFileToFileList } = useFileStore();
+  const { uploadFile } = useFileStore();
+  const { addSingleFileToList } = useFoldersStore();
   const { receivedData } = useSocketStore();
   const { toast } = useToast();
 
@@ -57,12 +59,12 @@ const UploadFile = () => {
       const folderId = responseData.folder_id;
 
       if (uploadFile.folderUniqueToken === id && folderId !== null) {
-        addFileToFileList(response);
+        addSingleFileToList(response);
       } else if (uploadFile.folderUniqueToken === null && folderId === null) {
-        addFileToFileList(response);
+        addSingleFileToList(response);
       }
     }
-  }, [id, receivedData, uploadFile.folderUniqueToken, addFileToFileList]);
+  }, [id, receivedData, uploadFile.folderUniqueToken, addSingleFileToList]);
 
   const onSubmit = async (values: z.infer<typeof UploadFileSchema>) => {
     const result = await uploadFile.request(values.files);
