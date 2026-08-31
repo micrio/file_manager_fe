@@ -151,7 +151,7 @@ const DefaultLayout = ({ children }: IProp) => {
 
             <main
               className={`w-full h-full rounded-md border-2 border-dashed transition-colors ${
-                isDragActive ? 'border-blue-400' : 'border-transparent'
+                isDragActive ? 'border-neutral-600 dark:border-neutral-400' : 'border-transparent'
               }`}
             >
               {children}

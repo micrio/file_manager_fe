@@ -182,7 +182,7 @@ const DropdownOption = ({
         </DialogContent>
       </Dialog>
       <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
-        <DialogTrigger className="p-2 hover:bg-red-500">
+        <DialogTrigger className="p-2 hover:bg-black/10 dark:hover:bg-white/10">
           <Label>Delete</Label>
         </DialogTrigger>
         <DialogContent>

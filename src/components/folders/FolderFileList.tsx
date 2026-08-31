@@ -125,7 +125,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
         <div className="mb-4">
           <Button
             variant="outline"
-            className="w-full justify-start border-slate-200 text-slate-600 hover:bg-slate-50"
+            className="w-full justify-start border-border text-foreground hover:bg-secondary"
             onClick={() => navigate(-1)}
           >
             <span className="text-sm font-medium">← Go Back</span>
@@ -134,28 +134,28 @@ const FolderFileList = ({ items = [] }: IProps) => {
       )}
 
       {/* Table Header */}
-      <div className="flex items-center px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+      <div className="flex items-center px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         <div className="w-10"></div>
         <div className="flex-grow">Name</div>
         <div className="mr-12">Created At</div>
       </div>
 
       {/* Bordered Container */}
-      <div className="border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-200 bg-white">
+      <div className="border border-border rounded-lg overflow-hidden divide-y divide-border bg-background">
         <Dialog>
           {items.map((item) => {
             if (item.type === 'folder') {
               return (
                 <div
-                  className="group flex items-center gap-3 px-4 py-3 hover:bg-slate-100 cursor-pointer transition-colors"
+                  className="group flex items-center gap-3 px-4 py-3 hover:bg-secondary cursor-pointer transition-colors"
                   key={item.unique_token}
                   onClick={() => handleFolderClick(String(item.unique_token))}
                 >
-                  <Folder className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                  <Label className="text-sm font-medium text-slate-700 flex-grow cursor-pointer select-none">
+                  <Folder className="w-4 h-4 text-foreground flex-shrink-0" />
+                  <Label className="text-sm font-medium text-foreground flex-grow cursor-pointer select-none">
                     {item.path}
                   </Label>
-                  <span className="text-xs text-slate-400 font-medium whitespace-nowrap mr-2">
+                  <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-2">
                     {item.created_at}
                   </span>
                   <Popover>
@@ -170,12 +170,12 @@ const FolderFileList = ({ items = [] }: IProps) => {
                         variant="ghost"
                         className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
-                        <LucideMoreVertical className="w-4 h-4 text-slate-500" />
+                        <LucideMoreVertical className="w-4 h-4 text-muted-foreground" />
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent
                       align="end"
-                      className="w-40 p-1 bg-white shadow-lg border rounded-lg"
+                      className="w-40 p-1 bg-popover shadow-lg border-border rounded-lg"
                     >
                       <DropdownOption
                         object_parent_id={id}
@@ -191,17 +191,17 @@ const FolderFileList = ({ items = [] }: IProps) => {
               return (
                 <DialogTrigger key={item.unique_token} asChild className="w-full text-left">
                   <div
-                    className="group flex items-center gap-3 px-4 py-3 hover:bg-slate-100 cursor-pointer transition-colors"
+                    className="group flex items-center gap-3 px-4 py-3 hover:bg-secondary cursor-pointer transition-colors"
                     title="Preview file"
                     onClick={() => handleFileClick(String(item.unique_token))}
                   >
-                    <div className="w-4 flex items-center justify-center flex-shrink-0 text-slate-500">
+                    <div className="w-4 flex items-center justify-center flex-shrink-0 text-foreground">
                       <FileLogo file_extension={item.file_extension} />
                     </div>
-                    <Label className="text-sm font-medium text-slate-700 flex-grow cursor-pointer select-none">
+                    <Label className="text-sm font-medium text-foreground flex-grow cursor-pointer select-none">
                       {item.filename + '.' + item.file_extension}
                     </Label>
-                    <span className="text-xs text-slate-400 font-medium whitespace-nowrap mr-2">
+                    <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-2">
                       {formatCreatedAt(item.created_at)}
                     </span>
                     <Popover>
@@ -215,12 +215,12 @@ const FolderFileList = ({ items = [] }: IProps) => {
                           variant="ghost"
                           className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                         >
-                          <LucideMoreVertical className="w-4 h-4 text-slate-500" />
+                          <LucideMoreVertical className="w-4 h-4 text-muted-foreground" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent
                         align="end"
-                        className="w-40 p-1 bg-white shadow-lg border rounded-lg z-10"
+                        className="w-40 p-1 bg-popover shadow-lg border-border rounded-lg z-10"
                       >
                         <DropdownOption
                           object_parent_id={id}
