@@ -74,6 +74,7 @@ interface IFile {
     request: (file_token: string) => void;
   };
   updateFileName: (data: unknown) => void;
+  removeFilePath: (data: unknown) => void;
   trashFileRequest: (uniqueToken: string) => void,
   removeFileRequest: (uniqueToken: string) => void,
 }

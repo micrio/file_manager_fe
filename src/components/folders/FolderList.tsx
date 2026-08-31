@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import DropdownOption from '../common/DropdownOption';
 
 import { useAuthStore } from '@/store/useAuthStore';
-import { IRenamedFolderSocketData, useFoldersStore } from '@/store/useFolderStore';
+import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
 import { useSocketStore } from '@/store/useSocketStore';
 import { FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
@@ -34,7 +34,7 @@ const FolderList = ({ folders }: IProps) => {
   };
 
   useEffect(() => {
-    const responseData = receivedData as IRenamedFolderSocketData;
+    const responseData = receivedData as FolderSocketData;
     const isFolderRenamedAction =
       responseData && responseData.action === FOLDER_RENAMED;
     const isFolderRemovedAction =

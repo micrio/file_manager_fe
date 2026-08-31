@@ -11,7 +11,7 @@ import DropdownOption from '../common/DropdownOption';
 
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFileStore } from '@/store/userFileStore';
-import { useFoldersStore } from '@/store/useFolderStore';
+import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 import { useSocketStore } from '@/store/useSocketStore';
 
@@ -43,7 +43,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
   const [fileExtension, setFileExtension] = useState<string>('');
 
   useEffect(() => {
-    const responseData = receivedData as any;
+    const responseData = receivedData as unknown as FolderSocketData;
     if (!responseData) return;
 
     if (responseData.action === FILE_RENAMED) {

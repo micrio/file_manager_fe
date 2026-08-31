@@ -33,8 +33,12 @@ import axiosConfig from '@/apis/axiosConfig';
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
 import { ROUTES } from '@/constants/routes';
 
-let navigate: (path: string, state?: any) => void;
-export const setGlobalNavigate = (n: (path: string, state?: any) => void) => {
+let navigate: (path: string, state?: Record<string, unknown>) => void;
+
+const apiErrorBody = (error: AxiosError) =>
+  error.response?.data as { message?: string; error?: string } | undefined;
+
+export const setGlobalNavigate = (n: (path: string, state?: Record<string, unknown>) => void) => {
   navigate = n;
 };
 
@@ -78,10 +82,10 @@ interface IAuth {
     error: unknown;
     message: string | null;
     errorMessage: string | null;
-    getRequest: (path: string) => Promise<AxiosResponse>;
-    postRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse>;
-    putRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse>;
-    deleteRequest: (path: string, options?: unknown) => Promise<AxiosResponse>;
+    getRequest: (path: string) => Promise<AxiosResponse | AxiosError>;
+    postRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
+    putRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
+    deleteRequest: (path: string, options?: unknown) => Promise<AxiosResponse | AxiosError>;
   };
 }
 
@@ -97,6 +101,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     loading: false,
     enableLoader: false,
     setEnableLoader: () => null,
+    logout: () => null,
     signingIn: false,
     setSigningIn: () => null,
     auth: auth,
@@ -121,7 +126,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
       request: () => null,
     },
     refreshToken: {
-      request: () => null,
+      request: () => Promise.resolve(false),
       retryCount: 0,
       incrementRetry: () => {},
       resetRetry: () => {},
@@ -132,10 +137,10 @@ export const useAuthStore = create<IAuth>((set, getState) => {
       error: {},
       message: '',
       errorMessage: '',
-      getRequest: () => null,
-      postRequest: () => null,
-      putRequest: () => null,
-      deleteRequest: () => null,
+      getRequest: () => Promise.resolve({} as unknown as AxiosResponse),
+      postRequest: () => Promise.resolve({} as unknown as AxiosResponse),
+      putRequest: () => Promise.resolve({} as unknown as AxiosResponse),
+      deleteRequest: () => Promise.resolve({} as unknown as AxiosResponse),
     },
   };
 
@@ -169,6 +174,26 @@ export const useAuthStore = create<IAuth>((set, getState) => {
         ...state,
         signingIn: signingIn
       }));
+    },
+
+    logout: (message?: string) => {
+      const msg = message || 'Logged out. Sign in again';
+
+      localStorage.setItem('logout_message', msg);
+      removeAllCookie();
+
+      set((state) => ({
+        ...state,
+        auth: {
+          ...state.auth,
+          accessToken: null,
+          refreshToken: null,
+        },
+      }));
+
+      if (navigate) {
+        navigate(ROUTES.signin, { state: { message: msg } });
+      }
     },
 
     auth: {
@@ -396,13 +421,13 @@ export const useAuthStore = create<IAuth>((set, getState) => {
                   ...state.api,
                   status: error.response?.status || error.request?.status || 500,
                   error: error,
-                  message: (error.response?.data as any)?.message || error.message,
-                  errorMessage: (error.response?.data as any)?.error || error.message,
+                  message: apiErrorBody(error)?.message ?? error.message,
+                  errorMessage: apiErrorBody(error)?.error ?? error.message,
                 },
               }));
-
-              return error;
             }
+
+            return error;
           });
       },
 

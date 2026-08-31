@@ -7,7 +7,7 @@ import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 
-import { ICreatedFolderSocketData, useFoldersStore } from '@/store/useFolderStore';
+import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
 import { useSocketStore } from '@/store/useSocketStore';
 import { FOLDER_CREATED } from '@/constants/socketActions';
 import { TOAST_VARIANT_GHOST } from '@/constants/components/ui/toastConstant';
@@ -24,7 +24,7 @@ const CreateFolder = () => {
   }, [id]);
 
   useEffect(() => {
-    const responseData = receivedData as ICreatedFolderSocketData;
+    const responseData = receivedData as FolderSocketData;
     const isFolderCreateAction =
       responseData && responseData.action === FOLDER_CREATED;
 

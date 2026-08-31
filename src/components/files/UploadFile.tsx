@@ -38,7 +38,6 @@ const UploadFile = () => {
       files: undefined,
     },
   });
-  const filesRef = form.register('files', { required: true });
 
   useEffect(() => {
     useFileStore.getState().uploadFile.setFolderUniqueToken(id ?? null);

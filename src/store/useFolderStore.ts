@@ -1,13 +1,8 @@
 import { create } from 'zustand';
-import { AxiosResponse } from 'axios';
+import { AxiosError, AxiosResponse } from 'axios';
 
 import { useAuthStore } from './useAuthStore';
-import {
-  IFolderData,
-  IFolderContentData,
-  IFolderListResponse,
-  IFolderContentResponse
-} from '@/apis/folder/folderInterface';
+import { IFolderData, IFolderContentData } from '@/apis/folder/folderInterface';
 import {
   FOLDERS_BASE_API,
   FOLDERS_CONTENT_API,
@@ -16,103 +11,131 @@ import {
   FOLDERS_TRASH_FOLDER_API,
 } from '@/constants/apis';
 
+export type MutationResult = {
+  ok: boolean;
+  data?: unknown;
+  message?: string;
+};
+
+type ResponseEnvelope = {
+  success?: boolean;
+  data?: unknown;
+  meta?: { error?: string; message?: string };
+};
+
+function extractErrorMessage(err: AxiosError): string {
+  const body = err.response?.data as
+    | {
+        meta?: { error?: string; message?: string };
+        error?: string;
+        message?: string;
+      }
+    | undefined;
+
+  return (
+    body?.meta?.error ??
+    body?.meta?.message ??
+    body?.error ??
+    body?.message ??
+    'Something went wrong'
+  );
+}
+
+function requestWithResult(promise: Promise<unknown>): Promise<MutationResult> {
+  return promise.then((response) => {
+    const result = response as AxiosResponse | AxiosError;
+
+    if (result instanceof AxiosError) {
+      return { ok: false, message: extractErrorMessage(result) };
+    }
+
+    const envelope = result.data as ResponseEnvelope | undefined;
+
+    if (envelope?.success === false) {
+      return {
+        ok: false,
+        message:
+          envelope.meta?.error ?? envelope.meta?.message ?? 'Something went wrong',
+      };
+    }
+
+    return { ok: true, data: envelope?.data };
+  });
+}
+
+const buildUrl = (base: string, uniqueToken?: string, type?: string) => {
+  const params: string[] = [];
+
+  if (uniqueToken !== undefined) {
+    params.push(`unique_token=${uniqueToken}`);
+  }
+
+  if (type !== undefined) {
+    params.push(`type=${type}`);
+  }
+
+  return params.length > 0 ? `${base}?${params.join('&')}` : base;
+};
+
+const removeItemByToken = (
+  folders: IFolderData[],
+  contents: IFolderContentData[],
+  token: string
+) => ({
+  folders: folders.filter((item) => item.unique_token !== token),
+  contents: contents.filter((item) => item.unique_token !== token),
+});
+
+export interface FolderSocketData {
+  action: string;
+  data: Array<{
+    id: number;
+    unique_token: string;
+    path: string;
+    parent_folder_id: number;
+    created_at: string;
+  }>;
+}
+
 interface IFolder {
   folders: IFolderData[];
   contents: IFolderContentData[];
-  getFoldersList: (type: string, uniqueToken?: string) => void;
-  getFoldersContent: (type: string, uniqueToken?: string) => void;
+  getFoldersList: (type: string, uniqueToken?: string) => Promise<MutationResult>;
+  getFoldersContent: (type: string, uniqueToken?: string) => Promise<MutationResult>;
   createFolder: {
     pathName: string | null;
     parentFolderToken: string | null;
     setPathName: (pathName: string) => void;
     setParentFolderToken: (parentFolderToken: string | null) => void;
   };
-  createFolderRequest: () => void;
-  addSingleFolderToList: (data: unknown) => void;
+  createFolderRequest: () => Promise<MutationResult>;
+  addSingleFolderToList: (data: FolderSocketData) => void;
   renameFolder: {
     uniqueToken: string | null;
     newPathName: string | null;
     setNewPathName: (newPath: string) => void;
     setUniqueToken: (uniqueToken: string) => void;
   };
-  renameFolderRequest: () => void;
-  updateFolderPath: (data: unknown) => void;
-  trashFolderRequest: (uniqueToken: string) => void;
-  trashFolderPath: (data: unknown) => void;
-  removeFolderRequest: (uniqueToken: string) => void;
-  removeFolderPath: (data: unknown) => void;
-}
-
-export interface ICreatedFolderSocketData {
-  action: string;
-  data: [
-    {
-      id: number;
-      unique_token: string;
-      path: string;
-      parent_folder_id: number;
-      created_at: string;
-    }
-  ];
-}
-
-export interface IRenamedFolderSocketData {
-  action: string;
-  data: [
-    {
-      id: number;
-      unique_token: string;
-      path: string;
-      parent_folder_id: number;
-      created_at: string;
-    }
-  ];
-}
-
-
-export interface ITrashedFolderSocketData {
-  action: string;
-  data: [
-    {
-      id: number;
-      unique_token: string;
-      path: string;
-      parent_folder_id: number;
-      created_at: string;
-    }
-  ];
-}
-
-export interface IRemovedFolderSocketData {
-  action: string;
-  data: [
-    {
-      id: number;
-      unique_token: string;
-      path: string;
-      parent_folder_id: number;
-      created_at: string;
-    }
-  ];
+  renameFolderRequest: () => Promise<MutationResult>;
+  updateFolderPath: (data: FolderSocketData) => void;
+  trashFolderRequest: (uniqueToken: string) => Promise<MutationResult>;
+  trashFolderPath: (data: FolderSocketData) => void;
+  removeFolderRequest: (uniqueToken: string) => Promise<MutationResult>;
+  removeFolderPath: (data: FolderSocketData) => void;
 }
 
 export const useFoldersStore = create<IFolder>((set, getState) => {
-  const initialState = {
+  return {
     folders: [],
     contents: [],
-    getFolderList: () => null,
-    getFoldersContent: () => null,
+
     createFolder: {
       pathName: '',
-      uniqueToken: '',
       parentFolderToken: null,
       setPathName: (pathName: string) =>
         set((state) => ({
           ...state,
-          createFolder: {
-            ...state.createFolder,
-            pathName: pathName,
-          },
+          createFolder: { ...state.createFolder, pathName: pathName },
         })),
       setParentFolderToken: (parentFolderToken: string | null) =>
         set((state) => ({
@@ -122,189 +145,155 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
             parentFolderToken: parentFolderToken,
           },
         })),
-      request: () => null,
     },
-    createFolderRequest: () => null,
-    addSingleFolderToList: () => null,
+
     renameFolder: {
       uniqueToken: null,
       newPathName: null,
       setUniqueToken: (uniqueToken: string) =>
         set((state) => ({
           ...state,
-          renameFolder: {
-            ...state.renameFolder,
-            uniqueToken: uniqueToken,
-          },
+          renameFolder: { ...state.renameFolder, uniqueToken: uniqueToken },
         })),
       setNewPathName: (newPathName: string) =>
         set((state) => ({
           ...state,
-          renameFolder: {
-            ...state.renameFolder,
-            newPathName: newPathName,
-          },
+          renameFolder: { ...state.renameFolder, newPathName: newPathName },
         })),
     },
-    renameFolderRequest: () => null,
-    updateFolderPath: () => null,
-    trashFolderRequest: () => null,
-    trashFolderPath: () => null,
-    removeFolderRequest: () => null,
-    removeFolderPath: () => null
-  };
 
-  return {
-    ...initialState,
-    getFoldersList: async (type: string, uniqueToken?: string) => {
-      const url = !uniqueToken
-        ? FOLDERS_BASE_API + `?type=${type}`
-        : FOLDERS_BASE_API + `?unique_token=${uniqueToken}&type=${type}`;
+    getFoldersList: async (type: string, uniqueToken?: string): Promise<MutationResult> => {
+      const url = buildUrl(FOLDERS_BASE_API, uniqueToken, type);
+      const result = await requestWithResult(
+        useAuthStore.getState().api.getRequest(url)
+      );
 
-      await useAuthStore.getState().api.getRequest(url);
+      if (result.ok) {
+        set((state) => ({
+          ...state,
+          folders: (result.data as IFolderData[]) ?? [],
+        }));
+      }
 
-      const response = useAuthStore.getState().api.data as AxiosResponse;
-      const responseData = response.data as IFolderListResponse;
-      const folders = responseData?.data ?? [];
-
-      set((state) => ({
-        ...state,
-        folders: folders,
-      }));
+      return result;
     },
 
-    getFoldersContent: async (type: string, uniqueToken?: string) => {
-      const url = !uniqueToken
-        ? FOLDERS_CONTENT_API + `?type=${type}`
-        : FOLDERS_CONTENT_API + `?unique_token=${uniqueToken}&type=${type}`;
+    getFoldersContent: async (
+      type: string,
+      uniqueToken?: string
+    ): Promise<MutationResult> => {
+      const url = buildUrl(FOLDERS_CONTENT_API, uniqueToken, type);
+      const result = await requestWithResult(
+        useAuthStore.getState().api.getRequest(url)
+      );
 
-      await useAuthStore.getState().api.getRequest(url);
+      if (result.ok) {
+        set((state) => ({
+          ...state,
+          contents: (result.data as IFolderContentData[]) ?? [],
+        }));
+      }
 
-      const response = useAuthStore.getState().api.data as AxiosResponse;
-      const responseData = response.data as IFolderContentResponse;
-      const contents = responseData?.data ?? [];
-
-      set((state) => ({
-        ...state,
-        contents: contents,
-      }));
+      return result;
     },
 
-    createFolderRequest: async () => {
+    createFolderRequest: async (): Promise<MutationResult> => {
       const newData = {
         folder: {
-          path: getState().createFolder.pathName + "/",
+          path: getState().createFolder.pathName + '/',
           parent_unique_token: getState().createFolder.parentFolderToken,
         },
       };
 
-      await useAuthStore.getState().api.postRequest(FOLDERS_BASE_API, newData);
+      return requestWithResult(
+        useAuthStore.getState().api.postRequest(FOLDERS_BASE_API, newData)
+      );
     },
 
-    addSingleFolderToList(data: unknown) {
-      const responseData = data as ICreatedFolderSocketData;
-      const folderItem = responseData?.data[0];
+    addSingleFolderToList: (data: FolderSocketData) => {
+      const folderItem = data?.data[0];
 
       if (!folderItem) return;
 
       set((state) => ({
-        ...state,
         folders: [folderItem, ...state.folders],
         contents: [
           {
             ...folderItem,
-            full_path: folderItem.path ? folderItem.path + "/" : null,
-            type: "folder",
+            full_path: folderItem.path ? `${folderItem.path}/` : null,
+            type: 'folder',
           } as IFolderContentData,
           ...state.contents,
         ],
       }));
     },
 
-    renameFolderRequest: async () => {
+    renameFolderRequest: async (): Promise<MutationResult> => {
       const bodyData = {
         folder: {
           unique_token: getState().renameFolder.uniqueToken,
-          path: getState().renameFolder.newPathName + "/",
+          path: getState().renameFolder.newPathName + '/',
         },
       };
 
-      await useAuthStore
-        .getState()
-        .api.putRequest(FOLDERS_RENAME_API, bodyData);
+      return requestWithResult(
+        useAuthStore.getState().api.putRequest(FOLDERS_RENAME_API, bodyData)
+      );
     },
 
-    updateFolderPath: async (data: unknown) => {
-      const responseData = data as IRenamedFolderSocketData;
-      const updatedItem = responseData?.data[0];
+    updateFolderPath: (data: FolderSocketData) => {
+      const updatedItem = data?.data[0];
 
       if (!updatedItem) return;
 
       set((state) => ({
-        ...state,
-        folders: state.folders.map((obj) => {
-          if (obj.unique_token === updatedItem.unique_token) {
-            return {
-              ...obj,
-              path: updatedItem.path,
-            };
-          }
-
-          return obj;
-        }),
-        contents: state.contents.map((obj) => {
-          if (obj.unique_token === updatedItem.unique_token) {
-            return {
-              ...obj,
-              path: updatedItem.path,
-            } as IFolderContentData;
-          }
-
-          return obj;
-        }),
-      }));
-    },
-
-    trashFolderRequest: async (unique_token: string) => {
-      const url = FOLDERS_TRASH_FOLDER_API + '?unique_token=' + unique_token;
-
-      await useAuthStore.getState().api.deleteRequest(url);
-    },
-
-    trashFolderPath: (data: unknown) => {
-      const response = data as IRemovedFolderSocketData;
-      const responseData = response.data[0];
-
-      set((state) => ({
-        ...state,
-        folders: state.folders.filter(
-          (item) => item.unique_token !== responseData.unique_token
+        folders: state.folders.map((obj) =>
+          obj.unique_token === updatedItem.unique_token
+            ? { ...obj, path: updatedItem.path }
+            : obj
         ),
-        contents: state.contents.filter(
-          (item) => item.unique_token !== responseData.unique_token
+        contents: state.contents.map((obj) =>
+          obj.unique_token === updatedItem.unique_token
+            ? ({ ...obj, path: updatedItem.path } as IFolderContentData)
+            : obj
         ),
       }));
     },
 
-    removeFolderRequest: async (unique_token: string) => {
-      const url = FOLDERS_REMOVE_FOLDER_API + '?unique_token=' + unique_token;
+    trashFolderRequest: async (uniqueToken: string): Promise<MutationResult> => {
+      const url = buildUrl(FOLDERS_TRASH_FOLDER_API, uniqueToken);
 
-      await useAuthStore.getState().api.deleteRequest(url);
+      return requestWithResult(
+        useAuthStore.getState().api.deleteRequest(url)
+      );
     },
 
-    removeFolderPath: (data: unknown) => {
-      const response = data as IRemovedFolderSocketData;
-      const responseData = response.data[0];
+    trashFolderPath: (data: FolderSocketData) => {
+      const item = data?.data[0];
 
-      set((state) => ({
-        ...state,
-        folders: state.folders.filter(
-          (item) => item.unique_token !== responseData.unique_token
-        ),
-        contents: state.contents.filter(
-          (item) => item.unique_token !== responseData.unique_token
-        ),
-      }));
-    }
+      if (!item) return;
+
+      set((state) =>
+        removeItemByToken(state.folders, state.contents, item.unique_token)
+      );
+    },
+
+    removeFolderRequest: async (uniqueToken: string): Promise<MutationResult> => {
+      const url = buildUrl(FOLDERS_REMOVE_FOLDER_API, uniqueToken);
+
+      return requestWithResult(
+        useAuthStore.getState().api.deleteRequest(url)
+      );
+    },
+
+    removeFolderPath: (data: FolderSocketData) => {
+      const item = data?.data[0];
+
+      if (!item) return;
+
+      set((state) =>
+        removeItemByToken(state.folders, state.contents, item.unique_token)
+      );
+    },
   };
 });

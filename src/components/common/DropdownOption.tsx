@@ -6,8 +6,9 @@ import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 
-import { useFoldersStore } from "@/store/useFolderStore";
+import { useFoldersStore, MutationResult } from "@/store/useFolderStore";
 import { useFileStore } from "@/store/userFileStore";
+import { useToast } from "@/components/ui/use-toast";
 import { TOAST_VARIANT_DESTRUCTIVE, TOAST_VARIANT_GHOST } from "@/constants/components/ui/toastConstant";
 import { ROUTES } from "@/constants/routes";
 
@@ -38,6 +39,7 @@ const DropdownOption = ({
   const isObjectTypeFile = object_type === 'file';
 
   const isTrashRoute = location.pathname.startsWith(ROUTES.trash);
+  const { toast } = useToast();
 
   const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -53,7 +55,12 @@ const DropdownOption = ({
     if (isObjectTypeFolder) {
       renameFolder.setUniqueToken(object_id);
 
-      await renameFolderRequest();
+      const result: MutationResult = await renameFolderRequest();
+
+      if (!result.ok) {
+        toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
+        return;
+      }
     }
 
     if (isObjectTypeFile) {
@@ -65,10 +72,13 @@ const DropdownOption = ({
 
   const handleDelete = async () => {
     if (isObjectTypeFolder) {
-      if (isTrashRoute) {
-        await removeFolderRequest(object_id);
-      } else {
-        await trashFolderRequest(object_id);
+      const result: MutationResult = isTrashRoute
+        ? await removeFolderRequest(object_id)
+        : await trashFolderRequest(object_id);
+
+      if (!result.ok) {
+        toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
+        return;
       }
     }
 
