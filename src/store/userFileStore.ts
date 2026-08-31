@@ -247,9 +247,8 @@ export const useFileStore = create<IFile>((set, getState) => {
 
     removeFileRequest: async (uniqueToken: string): Promise<MutationResult> => {
       return requestWithResult(
-        useAuthStore.getState().api.postRequest(
-          FILE_REMOVE_FILE_API,
-          { file_upload: { unique_token: uniqueToken } }
+        useAuthStore.getState().api.deleteRequest(
+          `${FILE_REMOVE_FILE_API}?unique_token=${uniqueToken}`
         )
       );
     },
