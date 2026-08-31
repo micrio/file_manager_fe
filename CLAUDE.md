@@ -41,6 +41,19 @@ React 18 single-page frontend for a Rails-backed file manager. Users browse fold
 - Storage & Trash render `<FolderFileList items={contents} />` (reads the folder store's `contents`).
 - Home renders folders only; the Folders (trashed) page renders folders plus `FileList` (reads `useFileStore().files`).
 
+## Theming
+
+The UI is **strictly black and white** — no chromatic colors. Colors are defined as HSL CSS variables (0% saturation) in `src/styles/global.css` under `:root` (light) and `.dark` (dark).
+
+- **Light theme** — the default. Light background, dark (near-black) text/elements.
+- **Dark theme** — dark background, **white text**, other elements in black/neutral-gray.
+
+Consume the palette through Tailwind design tokens (`bg-background`, `text-foreground`, `border-border`, `primary`, `secondary`, `muted`, `accent`, `destructive`, `popover`, `card`) — never hardcode colors. Tailwind keys to these via `tailwind.config.js` (`darkMode: ["class"]`).
+
+**Theme toggle** — `<ThemeToggle />` in `src/components/common/ThemeToggle.tsx`, rendered in `Sidebar.tsx`. Uses `next-themes` (already a dependency) via the `<ThemeProvider>` wrapper in `src/main.tsx` (`defaultTheme="light"`, `enableSystem`). Toggle state persists in `localStorage`. On first render `main.tsx` reads system preference, then user override wins. Dark mode flips the `.dark` class on `<html>`.
+
+Note: `app/globals.css` is a dead copy — `src/main.tsx` imports only `@/styles/global.css`. Do not edit the app-level copy.
+
 ## Key patterns & gotchas
 
 - **`contents` vs `files` are different slices.** The Storage/Trash file list is rendered from `useFoldersStore().contents`, **not** `useFileStore().files`. Entries are discriminated by a `type` field (`type: 'file'` vs `type: 'folder'`). Writing a newly created item into the wrong slice makes it invisible — the common cause of "new item doesn't appear in the list" bugs.
