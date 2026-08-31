@@ -4,7 +4,13 @@ import { AxiosResponse } from 'axios';
 import { useAuthStore } from './useAuthStore';
 
 import { IFileData, IFileListResponse, IFileUrlResponse } from '@/apis/file/fileInterface';
-import { FILES_BASE_API, FILES_GET_URL_API, FILE_REMOVE_FILE_API, FILE_RENAME_API } from '@/constants/apis';
+import {
+  FILES_BASE_API,
+  FILES_GET_URL_API,
+  FILE_TRASH_FILE_API,
+  FILE_REMOVE_FILE_API,
+  FILE_RENAME_API,
+} from '@/constants/apis';
 
 export interface ICreatedFileSocketData {
   action: string;
@@ -68,8 +74,8 @@ interface IFile {
     request: (file_token: string) => void;
   };
   updateFileName: (data: unknown) => void;
-  removeFileRequest: (uniqueToken: string) => void;
-  removeFilePath: (data: unknown) => void;
+  trashFileRequest: (uniqueToken: string) => void,
+  removeFileRequest: (uniqueToken: string) => void,
 }
 
 export const useFileStore = create<IFile>((set, getState) => {
@@ -226,10 +232,16 @@ export const useFileStore = create<IFile>((set, getState) => {
       }));
     },
 
+    trashFileRequest: async (uniqueToken: string) => {
+      const url = FILE_TRASH_FILE_API + "?unique_token=" + uniqueToken;
+
+      await useAuthStore.getState().api.deleteRequest(url);
+    },
+
     removeFileRequest: async (uniqueToken: string) => {
       const url = FILE_REMOVE_FILE_API + "?unique_token=" + uniqueToken;
 
-      await useAuthStore.getState().api.deleteRequest(url);
+      await useAuthStore.getState().api.postRequest(url, { file_upload: { unique_token: uniqueToken } });
     },
 
     removeFilePath: (data: unknown) => {

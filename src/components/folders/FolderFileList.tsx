@@ -161,7 +161,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
               );
             } else {
               return (
-                <DialogTrigger key={item.unique_token} className="w-full text-left">
+                <DialogTrigger key={item.unique_token} asChild className="w-full text-left">
                   <div
                     className="group flex items-center gap-3 px-4 py-3 hover:bg-slate-100 cursor-pointer transition-colors"
                     title="Preview file"

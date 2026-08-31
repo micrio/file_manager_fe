@@ -23,6 +23,7 @@ import {
   setAuthTokenCookie,
   setAuthUserCookie,
   setRefreshTokenCookie,
+  removeAllCookie,
 } from '@/lib/cookie';
 import {
   SIGNIN_SUCCESS_RESPONSE_MESSAGE,
@@ -337,6 +338,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
           }));
           const msg = 'Logged out. Sign in again';
           localStorage.setItem('logout_message', msg);
+          removeAllCookie();
           if (navigate) {
             navigate(ROUTES.signin, { state: { message: msg } });
           }

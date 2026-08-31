@@ -33,7 +33,7 @@ const DropdownOption = ({
     trashFolderRequest,
     removeFolderRequest
   } = useFoldersStore();
-  const { renameFile, removeFileRequest } = useFileStore();
+  const { renameFile, trashFileRequest, removeFileRequest } = useFileStore();
   const isObjectTypeFolder = object_type === 'folder';
   const isObjectTypeFile = object_type === 'file';
 
@@ -74,9 +74,9 @@ const DropdownOption = ({
 
     if (isObjectTypeFile) {
       if (isTrashRoute) {
-        await trashFolderRequest(object_id);
-      } else {
         await removeFileRequest(object_id);
+      } else {
+        await trashFileRequest(object_id);
       }
     }
 
