@@ -54,7 +54,7 @@ const CreateFolder = () => {
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <div className="w-auto">
         <DialogTrigger
-          className="flex items-center gap-3 p-2 text-sm font-medium text-slate-600 hover:text-black transition-colors rounded-md"
+          className="flex items-center gap-3 p-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md"
           title="Create Folder"
         >
           <FolderPlus className="w-6 h-6" />

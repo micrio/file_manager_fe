@@ -3,7 +3,7 @@ import UploadFile from "../files/UploadFile";
 
 const Header = () => {
   return (
-    <div className="flex gap-5 border-b-2 justify-end px-5 py-5">
+    <div className="flex gap-5 border-b border-border justify-end px-5 py-5">
       <CreateFolder />
       <UploadFile />
     </div>

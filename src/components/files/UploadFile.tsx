@@ -83,7 +83,7 @@ const UploadFile = () => {
     <Dialog open={openDialog} onOpenChange={setOpenDialog}>
       <div className="w-auto">
         <DialogTrigger
-          className="flex items-center gap-3 p-2 text-slate-600 hover:text-black transition-colors rounded-md"
+          className="flex items-center gap-3 p-2 text-muted-foreground hover:text-foreground transition-colors rounded-md"
           title="Upload File"
         >
           <FileUp className="w-6 h-6" />
