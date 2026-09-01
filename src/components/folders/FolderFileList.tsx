@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Folder, File, FileX, Image, Video, LucideMoreVertical, List, Grid3x3 } from 'lucide-react';
 
@@ -108,7 +108,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
   };
 
   const renderItem = (item: IFolderContentData) => (
-    <ContentItem key={item.unique_token} item={item} view={view} onFileClick={handlePreviewFile} getFileUrl={getFileUrl} />
+    <ContentItem key={item.unique_token} item={item} view={view} onFileClick={handlePreviewFile} />
   );
 
   useEffect(() => {
@@ -192,7 +192,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
   );
 };
 
-const ContentItem = ({ item, view, onFileClick, getFileUrl }: { item: IFolderContentData; view: ViewMode; onFileClick: (token: string) => void; getFileUrl: (token: string) => Promise<IFileUrlResponse> }) => {
+const ContentItem = ({ item, view, onFileClick }: { item: IFolderContentData; view: ViewMode; onFileClick: (token: string) => void }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isFileImage, isFileVideo, isFileDocument } = useFileExtensionCheck();
@@ -202,33 +202,9 @@ const ContentItem = ({ item, view, onFileClick, getFileUrl }: { item: IFolderCon
   const name = isFolder ? String(item.path) : `${item.filename}.${item.file_extension}`;
   const created = isFolder ? (item.created_at as string) : formatCreatedAt(item.created_at ?? null);
 
-  // Image thumbnail: fetch signed URL once the tile scrolls into view (icon shows until loaded).
-  const tileRef = useRef<HTMLDivElement>(null);
-  const [thumb, setThumb] = useState('');
-  const imageTile = !isFolder && isFileImage(String(item.file_extension ?? ''));
-
-  useEffect(() => {
-    if (!imageTile) return;
-    const node = tileRef.current;
-    if (!node) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          observer.disconnect();
-          getFileUrl(token).then(
-            (r) => setThumb((r as IFileUrlResponse).data.file_url),
-            () => setThumb('')
-          );
-        }
-      },
-      { threshold: 0.01 }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [imageTile, token, getFileUrl]);
+  // Thumbnail from the contents API: small for list, medium for grid.
+  const thumbKey: 'small' | 'medium' = view === 'grid' ? 'medium' : 'small';
+  const dataThumb = item.thumbnails ? item.thumbnails[thumbKey] : '';
 
   const FileLogo = ({ file_extension }: FileLogoProp) => {
     const logoSize = '20px';
@@ -282,11 +258,10 @@ const ContentItem = ({ item, view, onFileClick, getFileUrl }: { item: IFolderCon
           }}
         >
           <div
-            ref={tileRef}
             className="relative flex aspect-[4/3] items-center justify-center rounded-md bg-secondary overflow-hidden"
           >
-            {thumb ? (
-              <img src={thumb} alt={name} className="h-full w-full object-cover" />
+            {dataThumb ? (
+              <img src={dataThumb} alt={name} className="h-full w-full object-cover" />
             ) : isFolder ? (
               <Folder className="w-9 h-9 text-foreground" />
             ) : (
@@ -306,6 +281,8 @@ const ContentItem = ({ item, view, onFileClick, getFileUrl }: { item: IFolderCon
         >
           {isFolder ? (
             <Folder className="w-4 h-4 text-foreground flex-shrink-0" />
+          ) : dataThumb ? (
+            <img src={dataThumb} alt={name} className="h-10 w-10 flex-shrink-0 rounded object-cover" />
           ) : (
             <div className="w-4 flex items-center justify-center flex-shrink-0 text-foreground">
               <FileLogo file_extension={item.file_extension} />
