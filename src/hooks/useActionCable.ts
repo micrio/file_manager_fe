@@ -23,7 +23,8 @@ export const useActionCable = (channelName: string, token: string): HookReturnTy
   useEffect(() => {
     // Prevent duplication subscription initialization
     if (!consumer.current) {
-      consumer.current = ActionCable.createConsumer(`ws://localhost:3000/cable?token=${token}`);
+      const websocketUrl = process.env.REACT_APP_WEBSOCKET_URL ?? `ws://localhost:3000/cable`;
+      consumer.current = ActionCable.createConsumer(`${websocketUrl}?token=${token}`);
     }
 
     const newSubscription = consumer.current.subscriptions.create(channelName, {
