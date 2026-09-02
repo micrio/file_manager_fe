@@ -16,12 +16,16 @@ module.exports = {
     ],
     'simple-import-sort/imports': ['error', {
       groups: [
-        ['^react$'],
-        ['^[a-z@]'],
-        ['^\\w'],
-        ['^@/'],
-        ['^\\.'],
-        ['\\.(png|jpe?g|svg|css|scss|less)$'],
+        ['^react$'],                       // 1. React core
+        ['^[a-z@]'],                        // 3. third-party (lowercase / @scoped)
+        ['^\\w'],                           // 4. third-party (uppercased)
+        ['^@/components/ui/'],              // 5. @/components/ui/* (ui primitives)
+        ['^@/constants/'],                  // 6. @/constants/*
+        ['^@/store/'],                      // 7. @/store/*
+        ['^@/components/common/'],          // 8. @/components/common/*
+        ['^@/'],                            // 9. other @/ aliases
+        ['^\\.'],                           // 10. relative paths
+        ['\\.(png|jpe?g|svg|css|scss|less)$'], // 11. assets & styles
       ],
     }],
   },
