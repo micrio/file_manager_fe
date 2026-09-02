@@ -7,7 +7,7 @@ import { useFileStore } from '@/store/userFileStore';
 import Sidebar from "@/components/common/Sidebar";
 import Header from "@/components/common/Header";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload } from 'lucide-react';
 
 import {
   TOAST_VARIANT_DEFAULT,
@@ -150,12 +150,19 @@ const DefaultLayout = ({ children }: IProp) => {
             {!enableLoader && auth.isAuthenticated() && <Header />}
 
             <main
-              className={`w-full h-full rounded-md border-2 border-dashed transition-colors ${
+              className={`relative w-full h-full rounded-md border-2 border-dashed transition-colors ${
                 isDragActive ? 'border-neutral-600 dark:border-neutral-400' : 'border-transparent'
               }`}
             >
               {children}
             </main>
+
+            {isDragActive && (
+              <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground shadow-lg">
+                <Upload size={16} />
+                <span>Drop file here to upload</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
