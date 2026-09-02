@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Folder, File, FileX, Image, Video, LucideMoreVertical, List, Grid3x3 } from 'lucide-react';
 
+import { File, FileX, Folder, Grid3x3,Image, List, LucideMoreVertical, Video } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+
+import { IFileUrlResponse } from '@/apis/file/fileInterface';
+import { IFolderContentData } from '@/apis/folder/folderInterface';
 import FileView from '@/components/files/FileView';
-import { Label } from '../ui/label';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent } from '../ui/dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import DropdownOption from '../common/DropdownOption';
-
-import { useAuthStore } from '@/store/useAuthStore';
-import { FileSocketData, useFileStore } from '@/store/userFileStore';
-import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
+import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
+import { ROUTES } from '@/constants/routes';
+import { FILE_REMOVED, FILE_RENAMED, FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
+import { useAuthStore } from '@/store/useAuthStore';
+import { FolderSocketData,useFoldersStore } from '@/store/useFolderStore';
+import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
-import { IFolderContentData } from '@/apis/folder/folderInterface';
-import { IFileUrlResponse } from '@/apis/file/fileInterface';
-import { ROUTES } from '@/constants/routes';
-import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
-import { FILE_REMOVED, FILE_RENAMED, FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
+import DropdownOption from '../common/DropdownOption';
+import { Button } from '../ui/button';
+import { Dialog, DialogContent } from '../ui/dialog';
+import { Label } from '../ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface IProps {
   items: IFolderContentData[] | [];
@@ -56,7 +56,6 @@ function formatCreatedAt(createdAt: string | null): string {
 const FolderFileList = ({ items = [] }: IProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const { api } = useAuthStore();
   const { getFileUrl } = useFileStore();
   const {
@@ -67,11 +66,11 @@ const FolderFileList = ({ items = [] }: IProps) => {
   } = useFoldersStore();
   const { receivedData } = useSocketStore();
 
-  // Persist the chosen view per route path (/storage, /trash) so switching
-  // between pages restores each page's own selection.
+  // Persist the chosen view across /storage and /trash so both pages share one
+  // selected layout.
   const readInitialView = (): ViewMode => {
     try {
-      const stored = localStorage.getItem(`fileListView:${pathname}`) as ViewMode;
+      const stored = localStorage.getItem('fileListView') as ViewMode;
       return stored === 'list' || stored === 'grid' ? stored : 'list';
     } catch {
       return 'list';
@@ -83,7 +82,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
   const commitView = (next: ViewMode) => {
     setView(next);
     try {
-      localStorage.setItem(`fileListView:${pathname}`, next);
+      localStorage.setItem('fileListView', next);
     } catch {
       /* storage unavailable — keep in-memory value */
     }

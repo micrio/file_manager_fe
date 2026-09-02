@@ -1,5 +1,5 @@
-import CreateFolder from "../folders/CreateFolder";
 import UploadFile from "../files/UploadFile";
+import CreateFolder from "../folders/CreateFolder";
 
 const Header = () => {
   return (

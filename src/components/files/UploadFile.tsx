@@ -1,26 +1,27 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
+
 import { zodResolver } from '@hookform/resolvers/zod';
-
 import { FileUp } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { useForm } from 'react-hook-form';
+import { useParams } from 'react-router-dom';
+import { z } from 'zod';
 
-import { FileSocketData, useFileStore } from '@/store/userFileStore';
-import { useFoldersStore } from '@/store/useFolderStore';
-import { FILE_CREATED } from '@/constants/socketActions';
+import { IFileData } from '@/apis/file/fileInterface';
+import { useToast } from '@/components/ui/use-toast';
 import {
   TOAST_VARIANT_DEFAULT,
   TOAST_VARIANT_DESTRUCTIVE,
   TOAST_VARIANT_GHOST,
 } from '@/constants/components/ui/toastConstant';
-import { useToast } from '@/components/ui/use-toast';
+import { FILE_CREATED } from '@/constants/socketActions';
+import { useFoldersStore } from '@/store/useFolderStore';
+import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
-import { IFileData } from '@/apis/file/fileInterface';
+
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
+import { Input } from '../ui/input';
 
 const UploadFileSchema = z.object({
   files: z

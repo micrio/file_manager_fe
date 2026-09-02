@@ -1,16 +1,17 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
 
 import { FolderPlus } from 'lucide-react';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
+import { useParams } from 'react-router-dom';
 
-import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
-import { useSocketStore } from '@/store/useSocketStore';
-import { FOLDER_CREATED } from '@/constants/socketActions';
 import { TOAST_VARIANT_GHOST } from '@/constants/components/ui/toastConstant';
+import { FOLDER_CREATED } from '@/constants/socketActions';
+import { FolderSocketData,useFoldersStore } from '@/store/useFolderStore';
+import { useSocketStore } from '@/store/useSocketStore';
+
+import { Button } from '../ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 
 const CreateFolder = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);

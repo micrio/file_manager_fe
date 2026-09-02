@@ -1,8 +1,9 @@
-import { Button } from '../ui/button';
-import { Home, Folder, Trash2, LogOut } from 'lucide-react';
+import { Folder, Home, LogOut,Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { APP } from '@/constants/app';
+
+import { Button } from '../ui/button';
 import { ThemeToggle } from './ThemeToggle';
 
 interface ISidebar {

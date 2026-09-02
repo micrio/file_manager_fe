@@ -1,20 +1,20 @@
 import { useEffect } from 'react';
+
+import { Folder, LucideMoreVertical } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { Label } from '../ui/label';
-import { Folder, LucideMoreVertical } from 'lucide-react';
-
 import { IFolderData } from '@/apis/folder/folderInterface';
-import { ROUTES } from '@/constants/routes';
-import { Button } from '../ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import DropdownOption from '../common/DropdownOption';
-
-import { useAuthStore } from '@/store/useAuthStore';
-import { useFoldersStore, FolderSocketData } from '@/store/useFolderStore';
-import { useSocketStore } from '@/store/useSocketStore';
-import { FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
+import { ROUTES } from '@/constants/routes';
+import { FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
+import { useAuthStore } from '@/store/useAuthStore';
+import { FolderSocketData,useFoldersStore } from '@/store/useFolderStore';
+import { useSocketStore } from '@/store/useSocketStore';
+
+import DropdownOption from '../common/DropdownOption';
+import { Button } from '../ui/button';
+import { Label } from '../ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 
 interface IProps {
   folders: IFolderData[];
