@@ -23,12 +23,10 @@ import { useFoldersStore } from '@/store/useFolderStore';
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
-import { IFileData } from '@/apis/file/fileInterface';
-
 const UploadFileSchema = z.object({
   files: z
     .any()
-    .refine((file) => file?.length == 1, 'File is required.')
+    .refine((file) => file instanceof FileList && file.length > 0, 'Select one or more files.'),
   // .refine((file) => file[0]?.type === 'application/pdf', 'Must be a PDF.')
   // .refine((file) => file[0]?.size <= 3000000, `Max file size is 3MB.`),
 });
@@ -38,7 +36,7 @@ const UploadFile = () => {
   const [disableUpload, setDisableUpload] = useState<boolean>(true);
   const { id } = useParams();
   const { uploadFile } = useFileStore();
-  const { addSingleFileToList } = useFoldersStore();
+  const { addFilesToList } = useFoldersStore();
   const { receivedData } = useSocketStore();
   const { toast } = useToast();
 
@@ -57,17 +55,21 @@ const UploadFile = () => {
     const response = receivedData as unknown as FileSocketData;
     const isFileCreation = response && response.action === FILE_CREATED;
 
-    if (isFileCreation) {
-      const responseData = response.data[0] as IFileData;
-      const folderId = responseData.folder_id;
+    if (!isFileCreation) return;
 
-      if (uploadFile.folderUniqueToken === id && folderId !== null) {
-        addSingleFileToList(response);
-      } else if (uploadFile.folderUniqueToken === null && folderId === null) {
-        addSingleFileToList(response);
-      }
-    }
-  }, [id, receivedData, uploadFile.folderUniqueToken, addSingleFileToList]);
+    // A multi-upload broadcasts several files under one FILE_CREATED action.
+    // Match each broadcast entry against the dialog's upload target and merge
+    // all matches into the list at once.
+    const matching = response.data.filter((entry) => {
+      const folderId = entry.folder_id;
+
+      return uploadFile.folderUniqueToken === id
+        ? folderId !== null
+        : uploadFile.folderUniqueToken === null && folderId === null;
+    });
+
+    addFilesToList(matching);
+  }, [id, receivedData, uploadFile.folderUniqueToken, addFilesToList]);
 
   const onSubmit = async (values: z.infer<typeof UploadFileSchema>) => {
     const result = await uploadFile.request(values.files);

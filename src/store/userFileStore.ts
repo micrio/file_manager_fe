@@ -131,7 +131,7 @@ export const useFileStore = create<IFile>((set, getState) => {
         }
 
         for (let index = 0; index < files.length; index++) {
-          formData.append('file_upload[file]', files[index]);
+          formData.append('file_upload[file][]', files[index]);
         }
 
         return requestWithResult(

@@ -3,6 +3,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 
 import { useAuthStore } from './useAuthStore';
 import type { FileSocketData } from './userFileStore';
+import { IFileData } from '@/apis/file/fileInterface';
 import { IFolderData, IFolderContentData } from '@/apis/folder/folderInterface';
 import {
   FOLDERS_BASE_API,
@@ -112,6 +113,7 @@ interface IFolder {
   createFolderRequest: () => Promise<MutationResult>;
   addSingleFolderToList: (data: FolderSocketData) => void;
   addSingleFileToList: (data: FileSocketData) => void;
+  addFilesToList: (files: IFileData[]) => void;
   updateFilePath: (data: FileSocketData) => void;
   updateFileContentsName: (uniqueToken: string, newName: string) => void;
   removeFileFromContents: (data: FileSocketData) => void;
@@ -233,29 +235,36 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       }));
     },
 
-    // Mirror of addSingleFolderToList for uploaded files: prepend the file as a
-    // `type: 'file'` entry into `contents`, which Storage/Trash render. The
-    // folder socket broadcast is the only mechanism that surfaces a new file, so
-    // without this the uploaded file never appears in the list.
+    // Mirror of addSingleFolderToList for uploaded files: prepend the file(s) as
+    // `type: 'file'` entries into `contents`, which Storage/Trash render. The
+    // socket broadcast is the only mechanism that surfaces a new file, so
+    // without this the uploaded files never appear in the list.
+    addFilesToList: (files: IFileData[]) => {
+      if (!files || files.length === 0) return;
+
+      set((state) => ({
+        contents: files
+          .map(
+            (file) =>
+              ({
+                ...file,
+                id: file.id ?? 0,
+                unique_token: file.unique_token ?? '',
+                filename: file.filename ?? '',
+                file_extension: file.file_extension ?? '',
+                full_path: file.filename ?? '',
+                type: 'file',
+              } as IFolderContentData)
+          )
+          .concat(state.contents),
+      }));
+    },
+
+    // Thin wrapper over addFilesToList for the single-file broadcast case.
     addSingleFileToList: (data: FileSocketData) => {
       const file = data?.data[0];
 
-      if (!file) return;
-
-      set((state) => ({
-        contents: [
-          {
-            ...file,
-            id: file.id ?? 0,
-            unique_token: file.unique_token ?? '',
-            filename: file.filename ?? '',
-            file_extension: file.file_extension ?? '',
-            full_path: file.filename ?? '',
-            type: 'file',
-          } as IFolderContentData,
-          ...state.contents,
-        ],
-      }));
+      addFilesToList(file ? [file] : []);
     },
 
     updateFilePath: (data: FileSocketData) => {
