@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 
-import { useActionCable } from '@/hooks/useActionCable';
-import { getAuthTokenCookie } from '@/lib/cookie';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useSocketStore } from '@/store/useSocketStore';
+
+import { useActionCable } from '@/hooks/useActionCable';
+import { getAuthTokenCookie } from '@/lib/cookie';
 
 const ActionCableSocket = () => {
   const { auth } = useAuthStore();

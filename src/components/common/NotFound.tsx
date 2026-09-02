@@ -1,8 +1,8 @@
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 const NotFound = () => {
   const navigate = useNavigate();

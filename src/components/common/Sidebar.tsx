@@ -1,10 +1,11 @@
 import { Folder, Home, LogOut,Trash2 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
+
 import { APP } from '@/constants/app';
 
-import { Button } from '../ui/button';
-import { ThemeToggle } from './ThemeToggle';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 
 interface ISidebar {
   handleLogout: () => void;

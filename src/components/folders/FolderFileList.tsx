@@ -3,23 +3,26 @@ import { useEffect, useState } from 'react';
 import { File, FileX, Folder, Grid3x3,Image, List, LucideMoreVertical, Video } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { IFileUrlResponse } from '@/apis/file/fileInterface';
-import { IFolderContentData } from '@/apis/folder/folderInterface';
-import FileView from '@/components/files/FileView';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
 import { ROUTES } from '@/constants/routes';
 import { FILE_REMOVED, FILE_RENAMED, FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
-import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
+
 import { useAuthStore } from '@/store/useAuthStore';
 import { FolderSocketData,useFoldersStore } from '@/store/useFolderStore';
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
-import DropdownOption from '../common/DropdownOption';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent } from '../ui/dialog';
-import { Label } from '../ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import DropdownOption from '@/components/common/DropdownOption';
+
+import { IFileUrlResponse } from '@/apis/file/fileInterface';
+import { IFolderContentData } from '@/apis/folder/folderInterface';
+import FileView from '@/components/files/FileView';
+import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 
 interface IProps {
   items: IFolderContentData[] | [];

@@ -2,8 +2,8 @@ import React, { ReactNode } from 'react';
 
 import { ErrorBoundary as EBoundary  } from 'react-error-boundary';
 
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
 interface IErrorBoundary {
   children: ReactNode

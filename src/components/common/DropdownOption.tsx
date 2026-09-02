@@ -2,16 +2,17 @@ import { useEffect, useState } from "react";
 
 import { useLocation } from "react-router-dom";
 
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from "@/components/ui/use-toast";
+
 import { TOAST_VARIANT_DESTRUCTIVE, TOAST_VARIANT_GHOST } from "@/constants/components/ui/toastConstant";
 import { ROUTES } from "@/constants/routes";
+
 import { MutationResult,useFoldersStore } from "@/store/useFolderStore";
 import { useFileStore } from "@/store/userFileStore";
-
-import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
 
 interface IProps {
   object_parent_id?: string;

@@ -3,18 +3,21 @@ import { useEffect } from 'react';
 import { Folder, LucideMoreVertical } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { IFolderData } from '@/apis/folder/folderInterface';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
 import { ROUTES } from '@/constants/routes';
 import { FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
+
 import { useAuthStore } from '@/store/useAuthStore';
 import { FolderSocketData,useFoldersStore } from '@/store/useFolderStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
-import DropdownOption from '../common/DropdownOption';
-import { Button } from '../ui/button';
-import { Label } from '../ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import DropdownOption from '@/components/common/DropdownOption';
+
+import { IFolderData } from '@/apis/folder/folderInterface';
 
 interface IProps {
   folders: IFolderData[];

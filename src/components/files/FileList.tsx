@@ -2,17 +2,20 @@ import { useEffect, useState } from 'react';
 
 import { File, FileX, Image, LucideMoreVertical, Video } from 'lucide-react';
 
-import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
-import FileView from '@/components/files/FileView';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 import { FILE_REMOVED, FILE_RENAMED } from '@/constants/socketActions';
-import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
+
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
-import DropdownOption from '../common/DropdownOption';
-import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
-import { Label } from '../ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+import DropdownOption from '@/components/common/DropdownOption';
+
+import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
+import FileView from '@/components/files/FileView';
+import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 
 interface IProps {
   files: IFileData[];
