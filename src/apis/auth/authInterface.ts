@@ -56,6 +56,9 @@ export interface ISignupErrorResponse {
 export interface IRefreshTokenResponse {
   success: boolean;
   meta: {
-    token: string
+    token: string;
+    // Optional — backend currently returns only `token`. Present so a
+    // rotated refresh token (if ever issued) can be persisted.
+    refresh_token?: string;
   }
 }

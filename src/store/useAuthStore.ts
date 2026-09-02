@@ -90,6 +90,40 @@ interface IAuth {
 }
 
 export const useAuthStore = create<IAuth>((set, getState) => {
+  // On 401: refresh the access token once, then retry the original
+  // request with the new token. A failed refresh redirects to signin;
+  // a successful refresh re-runs the request.
+  const executeWithRefresh = async (
+    request: (headers: { Authorization: string }) => Promise<AxiosResponse>,
+  ): Promise<AxiosResponse | AxiosError> => {
+    const headers = getState().auth.getHeaderToken();
+
+    try {
+      return await request(headers);
+    } catch (error) {
+      const axiosError = error as AxiosError;
+
+      if (
+        axiosError.response?.status === API_RESPONSE_CODE.unauthorized &&
+        !!getState().auth.refreshToken
+      ) {
+        const refreshed = await getState().refreshToken.request();
+
+        if (refreshed) {
+          return request(getState().auth.getHeaderToken());
+        }
+
+        if (navigate) {
+          navigate(ROUTES.signin, {
+            state: { message: 'Logged out. Sign in again' },
+          });
+        }
+      }
+
+      return axiosError;
+    }
+  };
+
   const auth = {
     accessToken: null as string | null,
     refreshToken: null as string | null,
@@ -341,14 +375,22 @@ export const useAuthStore = create<IAuth>((set, getState) => {
           const data = await refreshTokenRequest(refreshHeader);
           const response = data.data as IRefreshTokenResponse;
           const token = response.meta.token;
+          const newRefreshToken = response.meta.refresh_token;
 
+          // Persist the refreshed tokens. Critically, write the new
+          // access token into `state.auth.accessToken` (not just the
+          // cookie): `getHeaderToken()` reads `state.auth.accessToken`
+          // first, and leaving it stale makes the retry in
+          // `executeWithRefresh` below replay the *old, expired* token.
           setAuthTokenCookie(token);
+          newRefreshToken && setRefreshTokenCookie(newRefreshToken);
 
           set((state) => ({
             ...state,
             auth: {
               ...state.auth,
-              refreshToken: token,
+              accessToken: token,
+              refreshToken: newRefreshToken ?? state.auth.refreshToken,
             },
           }));
           return true;
@@ -392,9 +434,21 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     api: {
       ...initialState.api,
       getRequest: async (path: string) => {
-        return await axiosConfig
-          .get(path, { headers: getState().auth.getHeaderToken() })
-          .then((data: AxiosResponse) => {
+        return executeWithRefresh((headers) =>
+          axiosConfig.get(path, { headers }),
+        ).then((data: AxiosResponse | AxiosError) => {
+          if (data instanceof AxiosError) {
+            set((state) => ({
+              ...state,
+              api: {
+                ...state.api,
+                status: data.response?.status || data.request?.status || 500,
+                error: data,
+                message: apiErrorBody(data)?.message ?? data.message,
+                errorMessage: apiErrorBody(data)?.error ?? data.message,
+              },
+            }));
+          } else {
             set((state) => ({
               ...state,
               api: {
@@ -402,105 +456,34 @@ export const useAuthStore = create<IAuth>((set, getState) => {
                 data: data,
               },
             }));
+          }
 
-            return data;
-          })
-          .catch((error: AxiosError) => {
-            if (error.response?.status === API_RESPONSE_CODE.unauthorized) {
-              getState().refreshToken.request().then((success) => {
-                if (!success) {
-                   if (navigate) {
-                     navigate(ROUTES.signin, { state: { message: 'Logged out. Sign in again' } });
-                   }
-                }
-              });
-            } else {
-              set((state) => ({
-                ...state,
-                api: {
-                  ...state.api,
-                  status: error.response?.status || error.request?.status || 500,
-                  error: error,
-                  message: apiErrorBody(error)?.message ?? error.message,
-                  errorMessage: apiErrorBody(error)?.error ?? error.message,
-                },
-              }));
-            }
-
-            return error;
-          });
+          return data;
+        });
       },
 
       postRequest: async (path: string, data?: unknown, options?: unknown) => {
-        const headers = getState().auth.getHeaderToken();
+        return executeWithRefresh((headers) => {
+          const merged = { ...headers, ...options as Record<string, string> };
 
-        options && Object.assign(headers, options);
-
-        return await axiosConfig
-          .post(path, data, { headers: headers })
-          .then((data: AxiosResponse) => {
-            return data;
-          })
-          .catch((error: AxiosError) => {
-            if (error.response?.status === API_RESPONSE_CODE.unauthorized) {
-              getState().refreshToken.request().then((success) => {
-                if (!success) {
-                   if (navigate) {
-                     navigate(ROUTES.signin, { state: { message: 'Logged out. Sign in again' } });
-                   }
-                }
-              });
-            }
-            return error;
-          });
+          return axiosConfig.post(path, data, { headers: merged });
+        });
       },
 
       putRequest: async (path: string, data?: unknown, options?: unknown) => {
-        const headers = getState().auth.getHeaderToken();
+        return executeWithRefresh((headers) => {
+          const merged = { ...headers, ...options as Record<string, string> };
 
-        options && Object.assign(headers, options);
-
-        return await axiosConfig
-          .put(path, data, { headers: headers })
-          .then((data: AxiosResponse) => {
-            return data;
-          })
-          .catch((error: AxiosError) => {
-            if (error.response?.status === API_RESPONSE_CODE.unauthorized) {
-              getState().refreshToken.request().then((success) => {
-                if (!success) {
-                   if (navigate) {
-                     navigate(ROUTES.signin, { state: { message: 'Logged out. Sign in again' } });
-                   }
-                }
-              });
-            }
-            return error;
-          });
+          return axiosConfig.put(path, data, { headers: merged });
+        });
       },
 
       deleteRequest: async (path: string, options?: unknown) => {
-        const headers = getState().auth.getHeaderToken();
+        return executeWithRefresh((headers) => {
+          const merged = { ...headers, ...options as Record<string, string> };
 
-        options && Object.assign(headers, options);
-
-        return await axiosConfig
-          .delete(path, { headers: headers })
-          .then((data: AxiosResponse) => {
-            return data;
-          })
-          .catch((error: AxiosError) => {
-            if (error.response?.status === API_RESPONSE_CODE.unauthorized) {
-              getState().refreshToken.request().then((success) => {
-                if (!success) {
-                   if (navigate) {
-                     navigate(ROUTES.signin, { state: { message: 'Logged out. Sign in again' } });
-                   }
-                }
-              });
-            }
-            return error;
-          });
+          return axiosConfig.delete(path, { headers: merged });
+        });
       },
     },
   };
