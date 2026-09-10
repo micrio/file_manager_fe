@@ -26,7 +26,11 @@ const Home = () => {
   const { isFileImage, isFileVideo, isFileDocument } = useFileExtensionCheck();
 
   const openFolder = (token: string) => {
-    navigate(ROUTES.storageWithId, { state: { uniqueToken: token } });
+    // Entered from the Home root: the folder's parent is the storage root,
+    // so "Go Back" returns to /storage (all top-level folders).
+    navigate(`${ROUTES.storage}/${encodeURIComponent(token)}`, {
+      state: { parentToken: null },
+    });
   };
 
   const [fileView, setFileView] = useState<ViewMode>('list');

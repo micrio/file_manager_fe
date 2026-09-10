@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { File, FileX, Folder, Grid3x3,Image, List, LucideMoreVertical, Video } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -59,6 +59,21 @@ function formatCreatedAt(createdAt: string | null): string {
 const FolderFileList = ({ items = [] }: IProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Folder "returned to" when pressing Go Back. Entered folders carry it in
+  // navigation state (see Home and ContentItem.openContent): null means the
+  // folder's parent is the storage root, otherwise the parent folder's token.
+  const parentToken = (location.state as { parentToken?: string | null })
+    ?.parentToken ?? null;
+
+  const handleGoBack = () => {
+    if (parentToken) {
+      navigate(ROUTES.storage + `/${parentToken}`);
+    } else {
+      navigate(ROUTES.storage);
+    }
+  };
   const { api } = useAuthStore();
   const { getFileUrl } = useFileStore();
   const {
@@ -141,7 +156,7 @@ const FolderFileList = ({ items = [] }: IProps) => {
           <Button
             variant="outline"
             className="w-full justify-start border-border text-foreground hover:bg-secondary"
-            onClick={() => navigate(-1)}
+            onClick={handleGoBack}
           >
             <span className="text-sm font-medium">← Go Back</span>
           </Button>
@@ -225,7 +240,7 @@ const ContentItem = ({ item, view, onFileClick }: { item: IFolderContentData; vi
 
   const openContent = () => {
     if (isFolder) {
-      navigate(ROUTES.storage + `/${token}`, { state: { uniqueToken: token } });
+      navigate(ROUTES.storage + `/${token}`, { state: { parentToken: id } });
     } else {
       onFileClick(token);
     }
