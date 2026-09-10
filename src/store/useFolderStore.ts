@@ -1,18 +1,20 @@
-import { create } from 'zustand';
 import { AxiosError, AxiosResponse } from 'axios';
+import { create } from 'zustand';
 
-import { useAuthStore } from './useAuthStore';
-import type { FileSocketData } from './userFileStore';
-import { IFileData } from '@/apis/file/fileInterface';
-import { IFolderData, IFolderContentData } from '@/apis/folder/folderInterface';
 import {
   FOLDERS_BASE_API,
   FOLDERS_CONTENT_API,
-  FOLDERS_ZIP_API,
   FOLDERS_REMOVE_FOLDER_API,
   FOLDERS_RENAME_API,
   FOLDERS_TRASH_FOLDER_API,
+  FOLDERS_ZIP_API,
 } from '@/constants/apis';
+
+import { IFileData } from '@/apis/file/fileInterface';
+import { IFolderContentData,IFolderData } from '@/apis/folder/folderInterface';
+
+import { useAuthStore } from './useAuthStore';
+import type { FileSocketData } from './userFileStore';
 
 export type MutationResult = {
   ok: boolean;
@@ -66,7 +68,13 @@ function requestWithResult(promise: Promise<unknown>): Promise<MutationResult> {
   });
 }
 
-const buildUrl = (base: string, uniqueToken?: string, type?: string) => {
+const buildUrl = (
+  base: string,
+  uniqueToken?: string,
+  type?: string,
+  sortBy?: string,
+  direction?: string,
+) => {
   const params: string[] = [];
 
   if (uniqueToken !== undefined) {
@@ -75,6 +83,14 @@ const buildUrl = (base: string, uniqueToken?: string, type?: string) => {
 
   if (type !== undefined) {
     params.push(`type=${type}`);
+  }
+
+  if (sortBy !== undefined) {
+    params.push(`sort_by=${sortBy}`);
+  }
+
+  if (direction !== undefined) {
+    params.push(`direction=${direction}`);
   }
 
   return params.length > 0 ? `${base}?${params.join('&')}` : base;
@@ -104,7 +120,12 @@ interface IFolder {
   folders: IFolderData[];
   contents: IFolderContentData[];
   getFoldersList: (type: string, uniqueToken?: string) => Promise<MutationResult>;
-  getFoldersContent: (type: string, uniqueToken?: string) => Promise<MutationResult>;
+  getFoldersContent: (
+    type: string,
+    uniqueToken?: string,
+    sortBy?: string,
+    direction?: string,
+  ) => Promise<MutationResult>;
   createFolder: {
     pathName: string | null;
     parentFolderToken: string | null;
@@ -192,9 +213,11 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
     getFoldersContent: async (
       type: string,
-      uniqueToken?: string
+      uniqueToken?: string,
+      sortBy?: string,
+      direction?: string,
     ): Promise<MutationResult> => {
-      const url = buildUrl(FOLDERS_CONTENT_API, uniqueToken, type);
+      const url = buildUrl(FOLDERS_CONTENT_API, uniqueToken, type, sortBy, direction);
       const result = await requestWithResult(
         useAuthStore.getState().api.getRequest(url)
       );

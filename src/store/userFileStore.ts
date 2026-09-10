@@ -1,15 +1,17 @@
-import { create } from 'zustand';
 import { AxiosError, AxiosResponse } from 'axios';
+import { create } from 'zustand';
 
-import { useAuthStore } from './useAuthStore';
-import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
 import {
-  FILES_BASE_API,
-  FILES_GET_URL_API,
-  FILE_TRASH_FILE_API,
   FILE_REMOVE_FILE_API,
   FILE_RENAME_API,
+  FILE_TRASH_FILE_API,
+  FILES_BASE_API,
+  FILES_GET_URL_API,
 } from '@/constants/apis';
+
+import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
+
+import { useAuthStore } from './useAuthStore';
 
 export type MutationResult = {
   ok: boolean;
@@ -78,7 +80,7 @@ export interface FileSocketData {
 
 interface IFile {
   files: IFileData[];
-  getFileList: (uniqueToken?: string) => Promise<MutationResult>;
+  getFileList: (uniqueToken?: string, sortBy?: string, direction?: string) => Promise<MutationResult>;
   getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
   uploadFile: {
     folderUniqueToken: string | null;
@@ -174,9 +176,27 @@ export const useFileStore = create<IFile>((set, getState) => {
       },
     },
 
-    getFileList: async (uniqueToken?: string): Promise<MutationResult> => {
-      const url = uniqueToken
-        ? `${FILES_BASE_API}?folder_unique_token=${uniqueToken}`
+    getFileList: async (
+      uniqueToken?: string,
+      sortBy?: string,
+      direction?: string,
+    ): Promise<MutationResult> => {
+      const params: string[] = [];
+
+      if (uniqueToken) {
+        params.push(`folder_unique_token=${uniqueToken}`);
+      }
+
+      if (sortBy) {
+        params.push(`sort_by=${sortBy}`);
+      }
+
+      if (direction) {
+        params.push(`direction=${direction}`);
+      }
+
+      const url = params.length > 0
+        ? `${FILES_BASE_API}?${params.join('&')}`
         : FILES_BASE_API;
 
       const result = await requestWithResult(

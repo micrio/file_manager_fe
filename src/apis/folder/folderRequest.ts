@@ -1,8 +1,9 @@
 import { AxiosRequestConfig } from 'axios';
 
 import { FOLDERS_BASE_API } from '@/constants/apis';
-import { ICreateFolderParams } from './folderInterface';
+
 import axiosConfig from '../axiosConfig';
+import { ICreateFolderParams } from './folderInterface';
 
 export const getFolderListRequest = async (options?: AxiosRequestConfig) => {
   return await axiosConfig.get(FOLDERS_BASE_API, options);

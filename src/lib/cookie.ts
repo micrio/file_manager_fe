@@ -1,8 +1,9 @@
-import Cookies from 'universal-cookie';
-import _isString from 'lodash/isString';
 import AES from 'crypto-js/aes';
 import encUtf8 from 'crypto-js/enc-utf8';
-import { AUTH_TOKEN, REFRESH_TOKEN, AUTH_USER } from '@/constants/cookies';
+import _isString from 'lodash/isString';
+import Cookies from 'universal-cookie';
+
+import { AUTH_TOKEN, AUTH_USER,REFRESH_TOKEN } from '@/constants/cookies';
 
 const CRYPTO_KEY = 'THIS SHOULD BE IN AN ENV FILE';
 const encrypData = (str: string) => AES.encrypt(str, CRYPTO_KEY).toString();

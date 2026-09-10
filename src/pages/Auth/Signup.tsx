@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
+
 import { zodResolver } from '@hookform/resolvers/zod';
-import { string, z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { useNavigate } from 'react-router-dom';
 import { useTimeout } from 'usehooks-ts';
+import { string, z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
@@ -18,11 +19,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 
-import { useAuthStore } from '@/store/useAuthStore';
 import { TOAST_VARIANT_DEFAULT, TOAST_VARIANT_DESTRUCTIVE } from '@/constants/components/ui/toastConstant';
 import { SIGNUP_ERROR_RESPONSE_MESSAGE } from '@/constants/reponseMessage';
-import { SHORT_DELAY_TIME } from '@/constants/timer';
 import { ROUTES } from '@/constants/routes';
+import { SHORT_DELAY_TIME } from '@/constants/timer';
+
+import { useAuthStore } from '@/store/useAuthStore';
 
 const SignupSchema = z
   .object({

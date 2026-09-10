@@ -1,5 +1,6 @@
-import { IReceivedData } from '@/hooks/useActionCable';
 import { create } from 'zustand';
+
+import { IReceivedData } from '@/hooks/useActionCable';
 
 interface ISocket {
   receivedData: IReceivedData;

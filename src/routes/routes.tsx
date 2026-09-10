@@ -1,18 +1,19 @@
 import {
-  RouterProvider,
   createBrowserRouter,
+  RouterProvider,
 } from "react-router-dom";
+
+import { ROUTES } from "@/constants/routes";
+
+import NotFound from "@/components/common/NotFound";
 
 import DefaultLayout from '@/layouts/default/DefaultLayout';
 import PrivateRoute from '@/layouts/private/PrivateRoute';
-import Signup from '@/pages/Auth/Signup';
 import Signin from '@/pages/Auth/Signin';
+import Signup from '@/pages/Auth/Signup';
 import Home from '@/pages/Home/Home';
 import Storage from '@/pages/Storage/Storage';
 import Trash from "@/pages/Trash/Trash";
-
-import { ROUTES } from "@/constants/routes";
-import NotFound from "@/components/common/NotFound";
 
 const Routes = () => {
   return (

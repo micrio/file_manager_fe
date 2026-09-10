@@ -1,5 +1,12 @@
-import { create } from 'zustand';
 import { AxiosError, AxiosResponse } from 'axios';
+import { create } from 'zustand';
+
+import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
+import {
+  SIGNIN_SUCCESS_RESPONSE_MESSAGE,
+  SIGNUP_SUCCESS_RESPONSE_MESSAGE,
+} from '@/constants/reponseMessage';
+import { ROUTES } from '@/constants/routes';
 
 import {
   IRefreshTokenResponse,
@@ -12,26 +19,20 @@ import {
   ISignupRequest,
 } from '@/apis/auth/authInterface';
 import {
+  refreshTokenRequest,
   signinRequest,
   signupRequest,
-  refreshTokenRequest,
 } from '@/apis/auth/authRequest';
+import axiosConfig from '@/apis/axiosConfig';
 import {
   getAuthTokenCookie,
   getAuthUserCookie,
   getRefreshTokenCookie,
+  removeAllCookie,
   setAuthTokenCookie,
   setAuthUserCookie,
   setRefreshTokenCookie,
-  removeAllCookie,
 } from '@/lib/cookie';
-import {
-  SIGNIN_SUCCESS_RESPONSE_MESSAGE,
-  SIGNUP_SUCCESS_RESPONSE_MESSAGE,
-} from '@/constants/reponseMessage';
-import axiosConfig from '@/apis/axiosConfig';
-import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
-import { ROUTES } from '@/constants/routes';
 
 let navigate: (path: string, state?: Record<string, unknown>) => void;
 

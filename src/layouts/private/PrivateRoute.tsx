@@ -1,8 +1,12 @@
 import { ReactNode, useEffect } from 'react';
+
 import { useNavigate } from 'react-router-dom';
-import ActionCableSocket from '@/components/common/ActionCableSocket';
-import { useAuthStore } from '@/store/useAuthStore';
+
 import { ROUTES } from '@/constants/routes';
+
+import { useAuthStore } from '@/store/useAuthStore';
+
+import ActionCableSocket from '@/components/common/ActionCableSocket';
 
 interface IProp {
   children: ReactNode;

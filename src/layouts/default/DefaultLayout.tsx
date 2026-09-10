@@ -1,22 +1,25 @@
 import { DragEvent, ReactNode, useEffect, useRef, useState } from 'react';
+
+import { Loader2, Upload } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
-import { useAuthStore } from '@/store/useAuthStore';
-import { useFileStore } from '@/store/userFileStore';
-
-import Sidebar from "@/components/common/Sidebar";
-import Header from "@/components/common/Header";
 import { Dialog, DialogContent } from '@/components/ui/dialog';
-import { Loader2, Upload } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 import {
   TOAST_VARIANT_DEFAULT,
   TOAST_VARIANT_DESTRUCTIVE,
 } from '@/constants/components/ui/toastConstant';
-import { useToast } from '@/components/ui/use-toast';
 import { ROUTES } from '@/constants/routes';
-import { removeAllCookie } from '@/lib/cookie';
+
+import { useAuthStore } from '@/store/useAuthStore';
+import { useFileStore } from '@/store/userFileStore';
+
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import Header from "@/components/common/Header";
+import Sidebar from "@/components/common/Sidebar";
+
+import { removeAllCookie } from '@/lib/cookie';
 
 interface IProp {
   children: ReactNode;

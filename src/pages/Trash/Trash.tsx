@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
+
 import { useParams } from 'react-router-dom';
 
-import FolderFileList from '@/components/folders/FolderFileList';
-import { useFoldersStore } from '@/store/useFolderStore';
 import { FOLDER_TRASHED_PARAM } from '@/constants/apis';
+
+import { useFoldersStore } from '@/store/useFolderStore';
+
+import FolderFileList from '@/components/folders/FolderFileList';
 
 const Trash = () => {
   const { contents, getFoldersContent } = useFoldersStore();
