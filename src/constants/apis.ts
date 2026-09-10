@@ -4,6 +4,7 @@ export const REFRESH_TOKEN_API = '/auth/refresh_token';
 
 export const FOLDERS_BASE_API = '/folders';
 export const FOLDERS_CONTENT_API = '/folders/contents';
+export const FOLDERS_ZIP_API = '/folders/download_zip';
 export const FOLDERS_RENAME_API = '/folders/rename';
 export const FOLDERS_TRASH_FOLDER_API = '/folders/trash_folder';
 export const FOLDERS_REMOVE_FOLDER_API = '/folders/remove_folder';

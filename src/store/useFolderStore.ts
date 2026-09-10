@@ -8,6 +8,7 @@ import { IFolderData, IFolderContentData } from '@/apis/folder/folderInterface';
 import {
   FOLDERS_BASE_API,
   FOLDERS_CONTENT_API,
+  FOLDERS_ZIP_API,
   FOLDERS_REMOVE_FOLDER_API,
   FOLDERS_RENAME_API,
   FOLDERS_TRASH_FOLDER_API,
@@ -28,10 +29,10 @@ type ResponseEnvelope = {
 function extractErrorMessage(err: AxiosError): string {
   const body = err.response?.data as
     | {
-        meta?: { error?: string; message?: string };
-        error?: string;
-        message?: string;
-      }
+      meta?: { error?: string; message?: string };
+      error?: string;
+      message?: string;
+    }
     | undefined;
 
   return (
@@ -129,6 +130,10 @@ interface IFolder {
   trashFolderPath: (data: FolderSocketData) => void;
   removeFolderRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFolderPath: (data: FolderSocketData) => void;
+  downloadFolderRequest: (
+    folderToken: string,
+    folderName: string,
+  ) => Promise<void>;
 }
 
 export const useFoldersStore = create<IFolder>((set, getState) => {
@@ -246,15 +251,15 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
         contents: files
           .map(
             (file) =>
-              ({
-                ...file,
-                id: file.id ?? 0,
-                unique_token: file.unique_token ?? '',
-                filename: file.filename ?? '',
-                file_extension: file.file_extension ?? '',
-                full_path: file.filename ?? '',
-                type: 'file',
-              } as IFolderContentData)
+            ({
+              ...file,
+              id: file.id ?? 0,
+              unique_token: file.unique_token ?? '',
+              filename: file.filename ?? '',
+              file_extension: file.file_extension ?? '',
+              full_path: file.filename ?? '',
+              type: 'file',
+            } as IFolderContentData)
           )
           .concat(state.contents),
       }));
@@ -285,10 +290,10 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
         contents: state.contents.map((item) =>
           item.type !== 'folder' && item.unique_token === file.unique_token
             ? {
-                ...item,
-                filename: file.name ?? file.filename ?? item.filename,
-                full_path: file.name ?? file.filename ?? item.full_path,
-              }
+              ...item,
+              filename: file.name ?? file.filename ?? item.filename,
+              full_path: file.name ?? file.filename ?? item.full_path,
+            }
             : item
         ),
       }));
@@ -387,6 +392,39 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       set((state) =>
         removeItemByToken(state.folders, state.contents, item.unique_token)
       );
+    },
+
+    downloadFolderRequest: async (
+      folderToken: string,
+      folderName: string,
+    ): Promise<void> => {
+      try {
+        const url = `${FOLDERS_ZIP_API}?unique_token=${folderToken}`;
+        const response = await useAuthStore.getState().api.getRequest(
+          url,
+          { responseType: 'blob' },
+        );
+
+        const contentDisposition = (response as AxiosResponse).headers?.['content-disposition'] || '';
+        const match = contentDisposition.match(/filename="?([^";]+)"?/);
+        const zipName = match?.[1] ?? `${folderName || 'folder'}.zip`;
+
+        const urlObj = URL.createObjectURL((response as AxiosResponse).data as Blob);
+        const link = document.createElement('a');
+        link.href = urlObj;
+        link.download = zipName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(urlObj);
+      } catch (error) {
+        const axiosError = error as AxiosError;
+        const toastTitle = (axiosError.response?.status ?? 0) >= 400
+          ? (axiosError.response?.data as { meta?: { error?: string } })?.meta?.error ?? 'Failed to download folder'
+          : 'Failed to download folder';
+        const toast = (window as unknown as { toast: (opts: { variant: string; title: string }) => void }).toast;
+        toast?.({ variant: 'destructive', title: toastTitle });
+      }
     },
   };
 });

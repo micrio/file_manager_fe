@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { TOAST_VARIANT_DESTRUCTIVE, TOAST_VARIANT_GHOST } from "@/constants/components/ui/toastConstant";
 import { ROUTES } from "@/constants/routes";
 
-import { MutationResult,useFoldersStore } from "@/store/useFolderStore";
+import { MutationResult, useFoldersStore } from "@/store/useFolderStore";
 import { useFileStore } from "@/store/userFileStore";
 
 interface IProps {
@@ -35,7 +35,8 @@ const DropdownOption = ({
     renameFolder,
     renameFolderRequest,
     trashFolderRequest,
-    removeFolderRequest
+    removeFolderRequest,
+    downloadFolderRequest,
   } = useFoldersStore();
   const { renameFile, trashFileRequest, removeFileRequest } = useFileStore();
   const isObjectTypeFolder = object_type === 'folder';
@@ -116,6 +117,12 @@ const DropdownOption = ({
     setOpenDeleteDialog(false);
   };
 
+  const handleDownload = async () => {
+    if (isObjectTypeFolder) {
+      await downloadFolderRequest(object_id, object_name);
+    }
+  };
+
   useEffect(() => {
     if (isObjectTypeFolder) {
       if (
@@ -151,9 +158,17 @@ const DropdownOption = ({
   ]);
 
   return (
-    <div className="flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="flex flex-col w-fit" onClick={(e) => e.stopPropagation()}>
+      {isObjectTypeFolder && (
+        <Label
+          className="p-2 hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+          onClick={handleDownload}
+        >
+          Download
+        </Label>
+      )}
       <Dialog open={openRenameDialog} onOpenChange={setOpenRenameDialog}>
-        <DialogTrigger className="p-2 hover:bg-black hover:bg-opacity-20">
+        <DialogTrigger className="p-2 hover:bg-black/20 dark:hover:bg-white/20">
           <Label>Rename</Label>
         </DialogTrigger>
         <DialogContent>

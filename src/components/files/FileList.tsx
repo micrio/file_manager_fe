@@ -107,7 +107,7 @@ const FileList = ({ files }: IProps) => {
                     <PopoverContent
                       align="start"
                       side="left"
-                      className="w-full m-0 p-0 bg-white border-2 border-black border-opacity-15 border-rounded z-10"
+                      className="w-fit m-0 p-0 bg-white border-2 border-black border-opacity-15 border-rounded z-10"
                     >
                       <DropdownOption
                         object_id={String(unique_token)}

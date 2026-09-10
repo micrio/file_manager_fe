@@ -52,7 +52,7 @@ interface IAuth {
   auth: {
     accessToken: string | null;
     refreshToken: string | null;
-    getHeaderToken: () => { Authorization: string };
+    getHeaderToken: () => { Authorization?: string };
     isAuthenticated: () => boolean;
   };
   signin: {
@@ -82,7 +82,7 @@ interface IAuth {
     error: unknown;
     message: string | null;
     errorMessage: string | null;
-    getRequest: (path: string) => Promise<AxiosResponse | AxiosError>;
+    getRequest: (path: string, options?: unknown) => Promise<AxiosResponse | AxiosError>;
     postRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
     putRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
     deleteRequest: (path: string, options?: unknown) => Promise<AxiosResponse | AxiosError>;
@@ -94,7 +94,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
   // request with the new token. A failed refresh redirects to signin;
   // a successful refresh re-runs the request.
   const executeWithRefresh = async (
-    request: (headers: { Authorization: string }) => Promise<AxiosResponse>,
+    request: (headers: { Authorization?: string }) => Promise<AxiosResponse>,
   ): Promise<AxiosResponse | AxiosError> => {
     const headers = getState().auth.getHeaderToken();
 
@@ -105,7 +105,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
 
       if (
         axiosError.response?.status === API_RESPONSE_CODE.unauthorized &&
-        !!getState().auth.refreshToken
+        !! ( getState().auth.refreshToken ?? getRefreshTokenCookie() )
       ) {
         const refreshed = await getState().refreshToken.request();
 
@@ -127,7 +127,7 @@ export const useAuthStore = create<IAuth>((set, getState) => {
   const auth = {
     accessToken: null as string | null,
     refreshToken: null as string | null,
-    getHeaderToken: () => ({ Authorization: "" }),
+    getHeaderToken: () => ({}),
     isAuthenticated: () => false,
   };
 
@@ -233,10 +233,11 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     auth: {
       ...initialState.auth,
       getHeaderToken: () => {
-        const token = getState().auth.accessToken || getAuthTokenCookie() || '';
-        return {
-          Authorization: token,
-        };
+        const token =
+          getState().auth.accessToken || getAuthTokenCookie();
+        return token
+          ? { Authorization: `Bearer ${token}` }
+          : {};
       },
 
       isAuthenticated: () => {
@@ -364,10 +365,14 @@ export const useAuthStore = create<IAuth>((set, getState) => {
     refreshToken: {
       ...initialState.refreshToken,
       request: async () => {
+        const token =
+          getState().auth.refreshToken ?? getRefreshTokenCookie();
+        if (!token) {
+          return false;
+        }
         const refreshHeader = {
           headers: {
-            Authorization: `Bearer ${getState().auth.refreshToken ?? getRefreshTokenCookie()
-              }`,
+            Authorization: `Bearer ${token}`,
           },
         };
 
@@ -433,9 +438,11 @@ export const useAuthStore = create<IAuth>((set, getState) => {
 
     api: {
       ...initialState.api,
-      getRequest: async (path: string) => {
+      getRequest: async (path: string, options?: unknown) => {
+        const merged = { ...options as Record<string, unknown> };
+
         return executeWithRefresh((headers) =>
-          axiosConfig.get(path, { headers }),
+          axiosConfig.get(path, { headers, ...merged }),
         ).then((data: AxiosResponse | AxiosError) => {
           if (data instanceof AxiosError) {
             set((state) => ({

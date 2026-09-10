@@ -238,7 +238,7 @@ const ContentItem = ({ item, view, onFileClick }: { item: IFolderContentData; vi
           <LucideMoreVertical className="w-4 h-4 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className={`w-40 p-1 bg-popover shadow-lg border-border rounded-lg ${zIndex}`}>
+      <PopoverContent align="end" className={`w-fit p-1 bg-popover shadow-lg border-border rounded-lg ${zIndex}`}>
         <DropdownOption object_parent_id={id} object_id={token} object_name={name} object_type={isFolder ? 'folder' : 'file'} />
       </PopoverContent>
     </Popover>
@@ -274,7 +274,7 @@ const ContentItem = ({ item, view, onFileClick }: { item: IFolderContentData; vi
             <div className="truncate text-sm font-medium text-foreground">{name}</div>
             <div className="text-xs text-muted-foreground">{created}</div>
           </div>
-          <div className="flex justify-end">{moreMenu('z-10')}</div>
+          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>{moreMenu('z-10')}</div>
         </div>
       ) : (
         <div
@@ -292,7 +292,7 @@ const ContentItem = ({ item, view, onFileClick }: { item: IFolderContentData; vi
           )}
           <Label className="text-sm font-medium text-foreground flex-grow cursor-pointer select-none">{name}</Label>
           <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-2">{created}</span>
-          <div className="mr-2">{moreMenu('')}</div>
+          <div className="mr-2" onClick={(e) => e.stopPropagation()}>{moreMenu('')}</div>
         </div>
       )}
     </>

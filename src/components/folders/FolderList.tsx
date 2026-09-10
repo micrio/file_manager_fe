@@ -125,7 +125,7 @@ const FolderList = ({ folders }: IProps) => {
               </PopoverTrigger>
               <PopoverContent
                 align="end"
-                className="w-40 p-1 bg-white shadow-lg border rounded-lg"
+                className="w-fit p-1 bg-white shadow-lg border rounded-lg"
               >
                 <DropdownOption
                   object_parent_id={id}
