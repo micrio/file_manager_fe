@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { create } from 'zustand';
 
 import { API_RESPONSE_CODE } from '@/constants/apiResponseCode';
@@ -84,7 +84,7 @@ interface IAuth {
     message: string | null;
     errorMessage: string | null;
     getRequest: (path: string, options?: unknown) => Promise<AxiosResponse | AxiosError>;
-    postRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
+    postRequest: (path: string, data?: unknown, config?: AxiosRequestConfig) => Promise<AxiosResponse | AxiosError>;
     putRequest: (path: string, data?: unknown, options?: unknown) => Promise<AxiosResponse | AxiosError>;
     deleteRequest: (path: string, options?: unknown) => Promise<AxiosResponse | AxiosError>;
   };
@@ -470,11 +470,17 @@ export const useAuthStore = create<IAuth>((set, getState) => {
         });
       },
 
-      postRequest: async (path: string, data?: unknown, options?: unknown) => {
+      postRequest: async (path: string, data?: unknown, config?: AxiosRequestConfig) => {
         return executeWithRefresh((headers) => {
-          const merged = { ...headers, ...options as Record<string, string> };
+          const { headers: configHeaders, ...rest } = config ?? {};
 
-          return axiosConfig.post(path, data, { headers: merged });
+          return axiosConfig.post(path, data, {
+            ...rest,
+            headers: {
+              ...headers,
+              ...(configHeaders as Record<string, string> | undefined),
+            },
+          });
         });
       },
 

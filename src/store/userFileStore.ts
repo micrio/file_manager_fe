@@ -9,6 +9,7 @@ import {
   FILES_BASE_API,
   FILES_GET_URL_API,
 } from '@/constants/apis';
+import { APP } from '@/constants/app';
 
 import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
 import { IFolderContentData } from '@/apis/folder/folderInterface';
@@ -117,7 +118,11 @@ interface IFile {
   uploadFile: {
     folderUniqueToken: string | null;
     setFolderUniqueToken: (uniqueToken: string | null) => void;
-    request: (files: FileList, folderUniqueToken?: string | null) => Promise<MutationResult>;
+    request: (
+      files: FileList,
+      folderUniqueToken?: string | null,
+      onProgress?: (percent: number) => void,
+    ) => Promise<MutationResult>;
   };
   renameFile: {
     folderUniqueToken: string | null;
@@ -160,11 +165,9 @@ export const useFileStore = create<IFile>((set, getState) => {
       request: async (
         files: FileList,
         folderUniqueToken: string | null | undefined = undefined,
+        onProgress?: (percent: number) => void,
       ): Promise<MutationResult> => {
         const formData = new FormData();
-        const headerOptions = {
-          'Content-Type': 'multipart/form-data',
-        };
         // An explicit token (e.g. from a drag-and-drop in a specific folder)
         // wins; otherwise fall back to the store's synced token.
         const folderToken =
@@ -181,7 +184,15 @@ export const useFileStore = create<IFile>((set, getState) => {
         }
 
         return requestWithResult(
-          useAuthStore.getState().api.postRequest(FILES_BASE_API, formData, headerOptions)
+          useAuthStore.getState().api.postRequest(FILES_BASE_API, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+            timeout: APP.uploadTimeout,
+            onUploadProgress: (event) => {
+              if (!onProgress || !event.total) return;
+
+              onProgress(Math.round((event.loaded * 100) / event.total));
+            },
+          })
         );
       },
     },

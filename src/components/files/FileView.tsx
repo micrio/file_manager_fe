@@ -1,10 +1,8 @@
-import ReactPlayer from 'react-player';
-
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 
 interface IProp {
   sourceUrl: string;
-  fileName :string;
+  fileName: string;
   fileExtension: string;
 }
 
@@ -14,32 +12,40 @@ const FileView = ({ sourceUrl, fileExtension, fileName }: IProp) => {
 
   const File = () => {
     if (isFileImage(fileExtension)) {
-      return <img src={sourceUrl} alt="file" />;
-    } else if (isFileVideo(fileExtension)) {
       return (
-        <>
-          <ReactPlayer
-            src={sourceUrl}
-            height={'100%'}
-            width={'100%'}
-            controls
-          />
-          <video src={sourceUrl} controls></video>
-        </>
+        <img
+          src={sourceUrl}
+          alt={fileName}
+          className="max-h-[80vh] w-full rounded-md object-contain"
+        />
       );
-    } else if (isFileDocument(fileExtension)) {
+    }
+
+    if (isFileVideo(fileExtension)) {
       return (
-        <a href={sourceUrl}>
+        <video
+          src={sourceUrl}
+          controls
+          className="max-h-[80vh] w-full rounded-md bg-black"
+        />
+      );
+    }
+
+    if (isFileDocument(fileExtension)) {
+      return (
+        <a href={sourceUrl} className="underline">
           Download Document <b>{fileName}</b>
         </a>
       );
-    } else {
-      return <></>;
     }
+
+    return <></>;
   };
 
   return (
-    <div className="m-5 flex flex-col">
+    // `pt-8` keeps the media clear of the dialog's absolutely-positioned close
+    // button (top-right), which would otherwise overlap the image/video corner.
+    <div className="flex w-full flex-col items-center pt-8">
       <File />
     </div>
   );

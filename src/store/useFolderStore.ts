@@ -323,8 +323,13 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
     addFilesToList: (files: IFileData[]) => {
       if (!files || files.length === 0) return;
 
-      set((state) => ({
-        contents: files
+      set((state) => {
+        // The same files can arrive twice — once from the upload response and
+        // once from the FILE_CREATED broadcast — so de-dupe by unique_token.
+        const existing = new Set(state.contents.map((item) => item.unique_token));
+
+        const newItems = files
+          .filter((file) => !existing.has(file.unique_token ?? ''))
           .map(
             (file) =>
             ({
@@ -336,9 +341,10 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
               full_path: file.filename ?? '',
               type: 'file',
             } as IFolderContentData)
-          )
-          .concat(state.contents),
-      }));
+          );
+
+        return { contents: newItems.concat(state.contents) };
+      });
     },
 
     // Thin wrapper over addFilesToList for the single-file broadcast case.

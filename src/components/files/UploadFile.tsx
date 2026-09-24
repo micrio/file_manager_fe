@@ -10,11 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
 
 import {
-  TOAST_VARIANT_DEFAULT,
-  TOAST_VARIANT_DESTRUCTIVE,
   TOAST_VARIANT_GHOST,
 } from '@/constants/components/ui/toastConstant';
 import { FILE_CREATED } from '@/constants/socketActions';
@@ -22,6 +19,8 @@ import { FILE_CREATED } from '@/constants/socketActions';
 import { useFoldersStore } from '@/store/useFolderStore';
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
+
+import { useUploadWithProgress } from '@/hooks/useUploadWithProgress';
 
 const UploadFileSchema = z.object({
   files: z
@@ -34,11 +33,12 @@ const UploadFileSchema = z.object({
 const UploadFile = () => {
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [disableUpload, setDisableUpload] = useState<boolean>(true);
+  const [uploading, setUploading] = useState<boolean>(false);
   const { id } = useParams();
   const { uploadFile } = useFileStore();
   const { addFilesToList } = useFoldersStore();
   const { receivedData } = useSocketStore();
-  const { toast } = useToast();
+  const { uploadWithProgress } = useUploadWithProgress();
 
   const form = useForm<z.infer<typeof UploadFileSchema>>({
     resolver: zodResolver(UploadFileSchema),
@@ -72,14 +72,18 @@ const UploadFile = () => {
   }, [id, receivedData, uploadFile.folderUniqueToken, addFilesToList]);
 
   const onSubmit = async (values: z.infer<typeof UploadFileSchema>) => {
-    const result = await uploadFile.request(values.files);
+    setUploading(true);
 
-    if (!result.ok) {
-      toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: result.message });
-      return;
-    }
+    // `undefined` keeps the dialog's synced folder token (set from `id`).
+    const result = await uploadWithProgress(
+      values.files as FileList,
+      undefined,
+    );
 
-    toast({ variant: TOAST_VARIANT_DEFAULT, title: 'File uploaded successfully' });
+    setUploading(false);
+
+    if (!result.ok) return;
+
     setOpenDialog(false);
     setDisableUpload(true);
   };
@@ -134,8 +138,8 @@ const UploadFile = () => {
               >
                 Close
               </Button>
-              <Button type="submit" disabled={disableUpload}>
-                Upload
+              <Button type="submit" disabled={disableUpload || uploading}>
+                {uploading ? 'Uploading...' : 'Upload'}
               </Button>
             </div>
           </form>

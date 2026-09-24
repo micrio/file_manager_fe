@@ -126,7 +126,7 @@ const FileList = ({ files }: IProps) => {
             }
           )}
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="w-[95vw] max-w-[95vw] sm:w-[60vw] sm:max-w-[60vw]">
           <FileView
             sourceUrl={sourceUrl}
             fileExtension={fileExtension}
