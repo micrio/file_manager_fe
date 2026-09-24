@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 
 import { APP } from '@/constants/app';
 import { ROUTES } from '@/constants/routes';
-import { FILE_CREATED, FILE_REMOVED } from '@/constants/socketActions';
+import { FILE_CREATED, FILE_REMOVED, FOLDER_REMOVED } from '@/constants/socketActions';
 
 import { useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
@@ -35,7 +35,12 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
   useEffect(() => {
     const action = (receivedData as { action?: string } | null)?.action;
 
-    if (action === FILE_CREATED || action === FILE_REMOVED) {
+    // Files: trash/remove. Folders: trash/remove (cascades to their files).
+    if (
+      action === FILE_CREATED ||
+      action === FILE_REMOVED ||
+      action === FOLDER_REMOVED
+    ) {
       getStorageUsage();
     }
   }, [receivedData, getStorageUsage]);

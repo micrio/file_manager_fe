@@ -12,6 +12,7 @@ import PrivateRoute from '@/layouts/private/PrivateRoute';
 import Signin from '@/pages/Auth/Signin';
 import Signup from '@/pages/Auth/Signup';
 import Home from '@/pages/Home/Home';
+import SharedBrowser from '@/pages/Shared/SharedBrowser';
 import SharedView from '@/pages/Shared/SharedView';
 import SharedWithMe from '@/pages/Shared/SharedWithMe';
 import Storage from '@/pages/Storage/Storage';
@@ -94,6 +95,16 @@ const Routes = () => {
               <PrivateRoute>
                 <DefaultLayout>
                   <SharedWithMe />
+                </DefaultLayout>
+              </PrivateRoute>
+            ),
+          },
+          {
+            path: ROUTES.sharedBrowseWithToken,
+            element: (
+              <PrivateRoute>
+                <DefaultLayout>
+                  <SharedBrowser />
                 </DefaultLayout>
               </PrivateRoute>
             ),

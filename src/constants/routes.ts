@@ -7,5 +7,6 @@ export const ROUTES = {
   storageWithId: '/storage/:id',
   trash: '/trash',
   sharedWithMe: '/shared-with-me',
+  sharedBrowseWithToken: '/shared/:token',
   shareWithToken: '/share/:token'
 };

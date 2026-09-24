@@ -22,3 +22,4 @@ export const FILE_STORAGE_USAGE_API = '/file_uploads/storage_usage';
 
 export const SHARES_API = '/shares';
 export const SHARED_API = '/shared';
+export const USERS_API = '/users';

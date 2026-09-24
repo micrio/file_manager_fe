@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 
+import { AxiosError, AxiosResponse } from 'axios';
 import { Check, Copy, Link2, Mail, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -15,13 +16,22 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
+import { USERS_API } from '@/constants/apis';
 import {
   TOAST_VARIANT_DEFAULT,
   TOAST_VARIANT_DESTRUCTIVE,
   TOAST_VARIANT_GHOST,
 } from '@/constants/components/ui/toastConstant';
 
+import { useAuthStore } from '@/store/useAuthStore';
 import { useShareStore } from '@/store/useShareStore';
+
+interface IUserOption {
+  id: number;
+  email: string;
+  fname: string;
+  lname: string;
+}
 
 interface IProps {
   objectId: string;
@@ -34,6 +44,8 @@ const ShareModal = ({ objectId, objectName, objectType }: IProps) => {
   const [mode, setMode] = useState<'link' | 'email'>('link');
   const [email, setEmail] = useState('');
   const [copied, setCopied] = useState(false);
+  const [results, setResults] = useState<IUserOption[]>([]);
+  const [searching, setSearching] = useState(false);
 
   const { toast } = useToast();
   const {
@@ -53,6 +65,7 @@ const ShareModal = ({ objectId, objectName, objectType }: IProps) => {
     getShares(shareableType, objectId);
     setMode('link');
     setEmail('');
+    setResults([]);
     setCopied(false);
   }, [open, shareableType, objectId, getShares]);
 
@@ -80,10 +93,36 @@ const ShareModal = ({ objectId, objectName, objectType }: IProps) => {
     }
   };
 
-  const handleCreateEmail = async () => {
-    if (!email.trim()) return;
+  const searchUsers = async (query: string) => {
+    if (query.trim().length < 2) {
+      setResults([]);
+      return;
+    }
 
-    const created = await createEmailShare(shareableType, objectId, email.trim());
+    setSearching(true);
+
+    const result = await useAuthStore
+      .getState()
+      .api.getRequest(`${USERS_API}?q=${encodeURIComponent(query.trim())}`);
+
+    setSearching(false);
+
+    if (result instanceof AxiosError) {
+      setResults([]);
+      return;
+    }
+
+    setResults(((result as AxiosResponse).data as { data?: IUserOption[] }).data ?? []);
+  };
+
+  const handleEmailChange = (value: string) => {
+    setEmail(value);
+    searchUsers(value);
+  };
+
+  // Only existing accounts can be invited (picked from the search results).
+  const inviteUser = async (user: IUserOption) => {
+    const created = await createEmailShare(shareableType, objectId, user.email);
 
     if (!created) {
       toast({ variant: TOAST_VARIANT_DESTRUCTIVE, title: 'Could not share with that email' });
@@ -91,6 +130,7 @@ const ShareModal = ({ objectId, objectName, objectType }: IProps) => {
     }
 
     setEmail('');
+    setResults([]);
     toast({
       variant: TOAST_VARIANT_DEFAULT,
       title: `Shared with ${created.shared_with_email}`,
@@ -162,19 +202,43 @@ const ShareModal = ({ objectId, objectName, objectType }: IProps) => {
             </p>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="relative">
             <Input
               type="email"
-              placeholder="name@example.com"
+              placeholder="Search by email"
               value={email}
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => handleEmailChange(event.target.value)}
               onKeyDown={(event) => {
-                if (event.key === 'Enter') handleCreateEmail();
+                if (event.key === 'Enter' && results.length === 1) {
+                  event.preventDefault();
+                  inviteUser(results[0]);
+                }
               }}
             />
-            <Button type="button" onClick={handleCreateEmail} disabled={!email.trim()}>
-              Invite
-            </Button>
+
+            {email.trim().length >= 2 && (
+              <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-border bg-popover shadow-md">
+                {results.length === 0 && !searching && (
+                  <p className="px-3 py-2 text-xs text-muted-foreground">
+                    No existing user matches that email.
+                  </p>
+                )}
+
+                {results.map((user) => (
+                  <button
+                    key={user.id}
+                    type="button"
+                    onClick={() => inviteUser(user)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-secondary"
+                  >
+                    <span className="truncate">{user.email}</span>
+                    <span className="ml-auto whitespace-nowrap text-xs text-muted-foreground">
+                      {user.fname} {user.lname}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
