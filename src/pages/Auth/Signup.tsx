@@ -1,24 +1,24 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { useTimeout } from 'usehooks-ts';
+import { Link, useNavigate } from 'react-router-dom';
 import { string, z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from '@/components/ui/use-toast';
 
+import { APP } from '@/constants/app';
 import { TOAST_VARIANT_DEFAULT, TOAST_VARIANT_DESTRUCTIVE } from '@/constants/components/ui/toastConstant';
 import { SIGNUP_ERROR_RESPONSE_MESSAGE } from '@/constants/reponseMessage';
 import { ROUTES } from '@/constants/routes';
@@ -26,15 +26,16 @@ import { SHORT_DELAY_TIME } from '@/constants/timer';
 
 import { useAuthStore } from '@/store/useAuthStore';
 
+import { ThemeToggle } from '@/components/common/ThemeToggle';
+
 const SignupSchema = z
   .object({
     fname: string().min(1, { message: 'Required' }),
     lname: string().min(1, { message: 'Required' }),
-    email: string().email(),
+    email: string().email({ message: 'Enter a valid email' }),
     password: string()
       .min(1, { message: 'Required' })
       .min(8, { message: 'Minimum of 8 characters' })
-      .min(8, 'Password must be at least 8 characters long')
       .regex(/\d/, 'Password must contain at least one digit')
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
@@ -76,13 +77,13 @@ const Signup = () => {
   };
 
   useEffect(() => {
-    if(signup.errorMessage) {
+    if (signup.errorMessage) {
       toast({
         variant: TOAST_VARIANT_DESTRUCTIVE,
         title: SIGNUP_ERROR_RESPONSE_MESSAGE,
       });
     }
-  }, [signup.errorMessage])
+  }, [signup.errorMessage]);
 
   useEffect(() => {
     if (signup.success) {
@@ -94,155 +95,154 @@ const Signup = () => {
     }
   }, [signup.success, signup.successMessage, navigate]);
 
-  useTimeout(() => {
-    if (signup.success) {
-      signup.initializeState();
+  // Redirect after a successful signup. Keyed on `signup.success` so it runs
+  // only when the flag flips true; `useTimeout` here would have fired once on
+  // mount (before success) and never again, leaving the user on the form.
+  useEffect(() => {
+    if (!signup.success) return;
+
+    const timer = setTimeout(() => {
+      useAuthStore.getState().signup.initializeState();
       navigate(ROUTES.signin);
-    }
-  }, SHORT_DELAY_TIME);
+    }, SHORT_DELAY_TIME);
+
+    return () => clearTimeout(timer);
+  }, [signup.success, navigate]);
 
   return (
-    <React.Fragment>
-      <div className="flex justify-center min-h-screen min-w-full mx-auto my-auto items-center align-middle">
-        <Card className="px-12 pb-5 w-[1000px] h-auto">
-          <CardTitle className="mt-10 mb-10 text-center">
-            Create Account
-          </CardTitle>
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-background px-4 py-8">
+      <div className="absolute left-4 top-4">
+        <ThemeToggle />
+      </div>
+      <Card className="w-full max-w-md border-border shadow-sm">
+        <CardContent className="p-8">
+          <div className="mb-8 space-y-1 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {APP.appName}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Create an account to get started.
+            </p>
+          </div>
+
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              <CardContent className="mb-5">
-                <div className="flex gap-12 mb-5">
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="fname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label>First Name</Label>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <div className="min-h-5">
-                            <FormMessage className="first-letter:uppercase">
-                              {signup.error?.fname}
-                            </FormMessage>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="lname"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label>Last Name</Label>
-                          <FormControl>
-                            <Input {...field} type="text" autoComplete="off" />
-                          </FormControl>
-                          <div className="min-h-5">
-                            <FormMessage className="first-letter:uppercase">
-                              {signup.error?.lname}
-                            </FormMessage>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-12 mb-5">
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label>Email</Label>
-                          <FormControl>
-                            <Input {...field} autoComplete="off" />
-                          </FormControl>
-                          <div className="min-h-5">
-                            <FormMessage className="first-letter:uppercase">
-                              {signup.error?.email}
-                            </FormMessage>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-1/2"></div>
-                </div>
-                <div className="flex gap-12">
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label>Password</Label>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              autoComplete="false"
-                              type="password"
-                            />
-                          </FormControl>
-                          <div className="min-h-5">
-                            <FormMessage className="first-letter:uppercase">
-                              {signup.error?.password}
-                            </FormMessage>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="w-1/2">
-                    <FormField
-                      control={form.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <Label>Confirm Password</Label>
-                          <FormControl>
-                            <Input
-                              {...field}
-                              autoComplete="off"
-                              type="password"
-                            />
-                          </FormControl>
-                          <div className="min-h-5">
-                            <FormMessage />
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="w-full flex flex-col">
-                <Button type="submit" disabled={!validForm || loading}>
-                  Signup
-                </Button>
-                <div className="mt-8">
-                  <Label>Already have account?</Label>
-                  <Button
-                    type="button"
-                    variant="link"
-                    className="m-0 p-0 pl-2 text-sm"
-                    onClick={() => {
-                      navigate(ROUTES.signin);
-                    }}
-                  >
-                    Signin
-                  </Button>
-                </div>
-              </CardFooter>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="fname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoComplete="given-name"
+                          placeholder="Jane"
+                        />
+                      </FormControl>
+                      <FormMessage>{signup.error?.fname}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lname"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last name</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          autoComplete="family-name"
+                          placeholder="Doe"
+                        />
+                      </FormControl>
+                      <FormMessage>{signup.error?.lname}</FormMessage>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                      />
+                    </FormControl>
+                    <FormMessage>{signup.error?.email}</FormMessage>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                      />
+                    </FormControl>
+                    <FormMessage>{signup.error?.password}</FormMessage>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirm password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="••••••••"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" className="w-full" disabled={!validForm || loading}>
+                Sign up
+              </Button>
             </form>
           </Form>
-        </Card>
-      </div>
-    </React.Fragment>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already have an account?{' '}
+            <Link
+              to={ROUTES.signin}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

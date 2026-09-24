@@ -102,7 +102,9 @@ const DefaultLayout = ({ children }: IProp) => {
 
     if (
       !enableLoader &&
-      !auth.isAuthenticated()
+      !auth.isAuthenticated() &&
+      pathname !== ROUTES.signin &&
+      pathname !== ROUTES.signup
     ) {
       navigate(ROUTES.signin);
     }

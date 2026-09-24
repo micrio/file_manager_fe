@@ -2,16 +2,11 @@ import { useEffect, useState } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { string, z } from 'zod';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -21,32 +16,33 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 
+import { APP } from '@/constants/app';
 import { TOAST_VARIANT_DESTRUCTIVE } from '@/constants/components/ui/toastConstant';
 import { ROUTES } from '@/constants/routes';
 
 import { useAuthStore } from '@/store/useAuthStore';
 
+import { ThemeToggle } from '@/components/common/ThemeToggle';
+
 const SigninSchema = z.object({
-  email: string(),
-  password: string(),
+  email: string().email({ message: 'Enter a valid email' }),
+  password: string().min(1, { message: 'Password is required' }),
 });
 
 const Signin = () => {
-  const [disableSubmit, setDisableSubmit] = useState(true);
-  const navigate = useNavigate();
   const { toast } = useToast();
-
   const { signin, auth } = useAuthStore();
+
+  const [disableSubmit, setDisableSubmit] = useState(true);
 
   const form = useForm<z.infer<typeof SigninSchema>>({
     resolver: zodResolver(SigninSchema),
     defaultValues: {
       email: '',
-      password: ''
-    }
+      password: '',
+    },
   });
   const formWatch = form.watch();
 
@@ -56,10 +52,10 @@ const Signin = () => {
     await signin.request({
       data: {
         email: values.email,
-        password: values.password
-      }
+        password: values.password,
+      },
     });
-  }
+  };
 
   useEffect(() => {
     if (signin.errorMessage) {
@@ -71,20 +67,35 @@ const Signin = () => {
   }, [signin.errorMessage, toast]);
 
   useEffect(() => {
-    if (formWatch.email.length > 0 && formWatch.password.length > 0) {
-      setDisableSubmit(false);
-    } else {
-      !disableSubmit && setDisableSubmit(true);
-    }
-  }, [form, formWatch, disableSubmit, setDisableSubmit]);
+    const isComplete =
+      formWatch.email.length > 0 && formWatch.password.length > 0;
+    setDisableSubmit(!isComplete);
+  }, [formWatch]);
 
-  return !auth.isAuthenticated() ? (
-    <div className="flex justify-center min-h-screen min-w-full mx-auto my-auto items-center align-middle">
-      <Card className="px-12">
-        <CardTitle className="mt-10 mb-10 text-center">File Manager</CardTitle>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent>
+  if (auth.isAuthenticated()) return <></>;
+
+  return (
+    <div className="relative flex min-h-screen w-full items-center justify-center bg-background px-4">
+      <div className="absolute left-4 top-4">
+        <ThemeToggle />
+      </div>
+      <Card className="w-full max-w-sm border-border shadow-sm">
+        <CardContent className="p-8">
+          <div className="mb-8 space-y-1 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {APP.appName}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Welcome back. Sign in to continue.
+            </p>
+          </div>
+
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              className="space-y-5"
+              noValidate
+            >
               <FormField
                 control={form.control}
                 name="email"
@@ -92,14 +103,18 @@ const Signin = () => {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                        placeholder="you@example.com"
+                      />
                     </FormControl>
-                    <div className="min-h-5">
-                      <FormMessage />
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="password"
@@ -107,38 +122,40 @@ const Signin = () => {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input {...field} type="password" />
+                      <Input
+                        {...field}
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                      />
                     </FormControl>
-                    <div className="min-h-5">
-                      <FormMessage />
-                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-            </CardContent>
-            <CardFooter className="flex-col">
-              <Button type="submit" disabled={disableSubmit}>
-                Signin
+
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={disableSubmit}
+              >
+                Sign in
               </Button>
-              <Label className="mt-6 text-sm">
-                Don't have an account?
-                <Button
-                  variant="link"
-                  className="m-0 p-0 pl-2 text-sm"
-                  onClick={() => {
-                    navigate(ROUTES.signup);
-                  }}
-                >
-                  Signup
-                </Button>
-              </Label>
-            </CardFooter>
-          </form>
-        </Form>
+            </form>
+          </Form>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{' '}
+            <Link
+              to={ROUTES.signup}
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
+        </CardContent>
       </Card>
     </div>
-  ) : (
-    <></>
   );
 };
 
