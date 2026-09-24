@@ -10,11 +10,13 @@ import { FILE_MOVED, FILE_REMOVED, FILE_RENAMED } from '@/constants/socketAction
 
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
+import { useUiStore } from '@/store/useUiStore';
 
 import DropdownOption from '@/components/common/DropdownOption';
 
 import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
 import FileView from '@/components/files/FileView';
+import { useCloseMenuOnOutsideClick } from '@/hooks/useCloseMenuOnOutsideClick';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 
 interface IProps {
@@ -32,6 +34,8 @@ const FileList = ({ files }: IProps) => {
   const { getFileUrl, updateFileName, removeFilePath } = useFileStore();
   const { isFileImage, isFileVideo, isFileDocument } = useFileExtensionCheck();
   const { receivedData } = useSocketStore();
+  const { openMenuId, setOpenMenuId } = useUiStore();
+  useCloseMenuOnOutsideClick();
 
   useEffect(() => {
     const responseData = receivedData as unknown as FileSocketData;
@@ -95,11 +99,22 @@ const FileList = ({ files }: IProps) => {
                   <Label className="text-md hover:cursor-pointer">
                     {filename + '.' + file_extension}
                   </Label>
-                  <Popover>
+                  <Popover
+                    open={openMenuId === String(unique_token)}
+                    onOpenChange={(isOpen) => {
+                      if (isOpen) setOpenMenuId(String(unique_token));
+                    }}
+                  >
                     <PopoverTrigger
                       asChild
+                      data-row-menu-trigger
                       onClick={(e) => {
                         e.stopPropagation();
+                        setOpenMenuId(
+                          openMenuId === String(unique_token)
+                            ? null
+                            : String(unique_token)
+                        );
                       }}
                     >
                       <LucideMoreVertical
@@ -112,6 +127,7 @@ const FileList = ({ files }: IProps) => {
                     <PopoverContent
                       align="start"
                       side="left"
+                      data-row-menu-content
                       className="w-fit m-0 p-0 bg-white border-2 border-black border-opacity-15 border-rounded z-10"
                     >
                       <DropdownOption

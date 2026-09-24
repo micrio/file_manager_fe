@@ -6,3 +6,5 @@ export const FILE_CREATED = 'file_created';
 export const FILE_RENAMED = 'file_renamed';
 export const FILE_REMOVED = 'file_removed';
 export const FILE_MOVED = 'file_moved';
+export const SHARE_CREATED = 'share_created';
+export const SHARE_REMOVED = 'share_removed';

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 
-import { Folder, HardDrive, Home, LogOut, Trash2 } from 'lucide-react';
+import { Folder, HardDrive, Home, LogOut, Trash2, Users } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 
 import { APP } from '@/constants/app';
+import { ROUTES } from '@/constants/routes';
 import { FILE_CREATED, FILE_REMOVED } from '@/constants/socketActions';
 
 import { useFileStore } from '@/store/userFileStore';
@@ -42,6 +43,7 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
   const NAV_ITEMS = [
     { name: "Home", path: "/home", icon: <Home className="w-4 h-4" /> },
     { name: "My Storage", path: "/storage", icon: <Folder className="w-4 h-4" /> },
+    { name: "Shared with me", path: ROUTES.sharedWithMe, icon: <Users className="w-4 h-4" /> },
     { name: "Trash", path: "/trash", icon: <Trash2 className="w-4 h-4" /> },
   ];
 

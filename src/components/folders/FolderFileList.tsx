@@ -16,6 +16,7 @@ import { useAuthStore } from '@/store/useAuthStore';
 import { ContentItemTypeFilter, ContentSortBy, ContentSortDirection, FolderSocketData, useFoldersStore } from '@/store/useFolderStore';
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
+import { useUiStore } from '@/store/useUiStore';
 
 import DropdownOption from '@/components/common/DropdownOption';
 
@@ -26,6 +27,7 @@ import {
   IFolderData,
 } from '@/apis/folder/folderInterface';
 import FileView from '@/components/files/FileView';
+import { useCloseMenuOnOutsideClick } from '@/hooks/useCloseMenuOnOutsideClick';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
 import { formatFileSize } from '@/lib/formatFileSize';
 
@@ -515,7 +517,7 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
                 <SlidersHorizontal className="w-4 h-4" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-2 bg-popover">
+            <PopoverContent align="start" className="w-56 p-2 bg-popover">
               <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Type
               </p>
@@ -629,6 +631,8 @@ const ContentItem = ({
   const { id } = useParams();
   const navigate = useNavigate();
   const { isFileImage, isFileVideo, isFileDocument } = useFileExtensionCheck();
+  const { openMenuId, setOpenMenuId } = useUiStore();
+  useCloseMenuOnOutsideClick();
 
   const isFolder = item.type === 'folder';
   const isFile = !isFolder;
@@ -733,17 +737,36 @@ const ContentItem = ({
       onMouseUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >
-      <Popover>
+      <Popover
+        open={openMenuId === String(token)}
+        onOpenChange={(isOpen) => {
+          // Radix's own outside-dismiss is unreliable here (row triggers stop
+          // propagation), so opening is the only thing we take from it. Closing
+          // is handled by useCloseMenuOnOutsideClick and the trigger toggle.
+          if (isOpen) setOpenMenuId(String(token));
+        }}
+      >
         <PopoverTrigger asChild>
           <Button
             variant="ghost"
+            data-row-menu-trigger
             className="h-8 w-8 p-0 opacity-100 cursor-pointer"
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+
+              // Toggle: clicking the open menu's own trigger closes it.
+              setOpenMenuId(
+                openMenuId === String(token) ? null : String(token)
+              );
+            }}
           >
             <LucideMoreVertical className="w-4 h-4 text-muted-foreground" />
           </Button>
         </PopoverTrigger>
         <PopoverContent
-          align="end"
+          align="start"
+          data-row-menu-content
           className="w-fit p-1 bg-popover shadow-lg border-border rounded-lg"
         >
           <DropdownOption

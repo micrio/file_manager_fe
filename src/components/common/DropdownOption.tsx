@@ -14,6 +14,8 @@ import { ROUTES } from "@/constants/routes";
 import { MutationResult, useFoldersStore } from "@/store/useFolderStore";
 import { useFileStore } from "@/store/userFileStore";
 
+import ShareModal from '@/components/share/ShareModal';
+
 interface IProps {
   object_parent_id?: string;
   object_id: string;
@@ -161,15 +163,20 @@ const DropdownOption = ({
     <div className="flex flex-col w-fit" onClick={(e) => e.stopPropagation()}>
       {isObjectTypeFolder && (
         <Label
-          className="p-2 hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
+          className="w-full p-2 text-left hover:bg-black/10 dark:hover:bg-white/10 cursor-pointer"
           onClick={handleDownload}
         >
           Download
         </Label>
       )}
+      <ShareModal
+        objectId={object_id}
+        objectName={object_name}
+        objectType={object_type}
+      />
       <Dialog open={openRenameDialog} onOpenChange={setOpenRenameDialog}>
-        <DialogTrigger className="p-2 hover:bg-black/20 dark:hover:bg-white/20">
-          <Label>Rename</Label>
+        <DialogTrigger className="w-full p-2 text-left hover:bg-black/20 dark:hover:bg-white/20">
+          <Label className="cursor-pointer">Rename</Label>
         </DialogTrigger>
         <DialogContent>
           <Input
@@ -199,8 +206,8 @@ const DropdownOption = ({
         </DialogContent>
       </Dialog>
       <Dialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
-        <DialogTrigger className="p-2 hover:bg-black/10 dark:hover:bg-white/10">
-          <Label>Delete</Label>
+        <DialogTrigger className="w-full p-2 text-left hover:bg-black/10 dark:hover:bg-white/10">
+          <Label className="cursor-pointer">Delete</Label>
         </DialogTrigger>
         <DialogContent>
           <Label className="mx-2 my-2">

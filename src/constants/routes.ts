@@ -5,5 +5,7 @@ export const ROUTES = {
   home: '/home',
   storage: '/storage',
   storageWithId: '/storage/:id',
-  trash: '/trash'
+  trash: '/trash',
+  sharedWithMe: '/shared-with-me',
+  shareWithToken: '/share/:token'
 };

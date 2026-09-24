@@ -14,10 +14,12 @@ import { FOLDER_MOVED, FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socket
 import { useAuthStore } from '@/store/useAuthStore';
 import { FolderSocketData, useFoldersStore } from '@/store/useFolderStore';
 import { useSocketStore } from '@/store/useSocketStore';
+import { useUiStore } from '@/store/useUiStore';
 
 import DropdownOption from '@/components/common/DropdownOption';
 
 import { IFolderData } from '@/apis/folder/folderInterface';
+import { useCloseMenuOnOutsideClick } from '@/hooks/useCloseMenuOnOutsideClick';
 
 import MoveFolderModal from './MoveFolderModal';
 
@@ -33,6 +35,8 @@ const FolderList = ({ folders, onFileToFolderDrop, isTrash = false }: IProps) =>
   const { api } = useAuthStore();
   const { renameFolder, updateFolderPath, removeFolderPath, moveFolder, moveFolderPath } = useFoldersStore();
   const { receivedData } = useSocketStore();
+  const { openMenuId, setOpenMenuId } = useUiStore();
+  useCloseMenuOnOutsideClick();
 
   // Move folder state — confirmation modal for folder-to-folder moves.
   const [moveModalOpen, setMoveModalOpen] = useState(false);
@@ -262,12 +266,23 @@ const FolderList = ({ folders, onFileToFolderDrop, isTrash = false }: IProps) =>
               </div>
 
               {/* Popover (context menu) — separate from both click and drag */}
-              <Popover>
+              <Popover
+                open={openMenuId === String(unique_token)}
+                onOpenChange={(isOpen) => {
+                  if (isOpen) setOpenMenuId(String(unique_token));
+                }}
+              >
                 <PopoverTrigger
                   asChild
+                  data-row-menu-trigger
                   onClick={(e) => {
                     e.stopPropagation();
                     renameFolder.setUniqueToken(String(unique_token));
+                    setOpenMenuId(
+                      openMenuId === String(unique_token)
+                        ? null
+                        : String(unique_token)
+                    );
                   }}
                 >
                   <Button
@@ -278,7 +293,8 @@ const FolderList = ({ folders, onFileToFolderDrop, isTrash = false }: IProps) =>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  align="end"
+                  align="start"
+                  data-row-menu-content
                   className="w-fit p-1 bg-white shadow-lg border rounded-lg"
                   onClick={(e) => e.stopPropagation()}
                 >

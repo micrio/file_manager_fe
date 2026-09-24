@@ -29,6 +29,7 @@ const DefaultLayout = ({ children }: IProp) => {
 
   const [isDragActive, setIsDragActive] = useState(false);
   const dragEnterCount = useRef(0);
+  const signingInRef = useRef(false);
 
   // Drag-and-drop upload is scoped to the storage routes, since only they carry
   // a folder token (`id`) to attach the dropped files to.
@@ -86,10 +87,20 @@ const DefaultLayout = ({ children }: IProp) => {
 
   useEffect(() => {
     if (
-      !enableLoader && !signingIn &&
+      !signingIn &&
       (pathname === ROUTES.signin || pathname === ROUTES.signup) &&
       auth.isAuthenticated()
     ) {
+      // Guard on `signingIn` (not `enableLoader`) so this fires once per sign-in.
+      //
+      // A ref latch is also required: React StrictMode invokes effects twice on
+      // mount, and both runs read the same stale `signingIn=false` from the
+      // store before React flushes state — scheduling two redirect/loader
+      // passes (the double modal). The ref flips synchronously, so the second
+      // run bails. The timer is cleared on cleanup to avoid a stray redirect.
+      if (signingInRef.current) return;
+      signingInRef.current = true;
+
       setEnableLoader(true);
       setSigningIn(true);
 
@@ -97,7 +108,12 @@ const DefaultLayout = ({ children }: IProp) => {
         navigate(ROUTES.home);
         setEnableLoader(false);
         setSigningIn(false);
+        signingInRef.current = false;
       }, 2000);
+
+      // No cleanup here: StrictMode's mount→cleanup→mount would clear this
+      // timer after the ref latch already blocked a reschedule, killing the
+      // redirect. The ref guard is what prevents duplicates.
     }
 
     if (
@@ -138,8 +154,14 @@ const DefaultLayout = ({ children }: IProp) => {
         onDragOver={onDragOver}
         onDrop={onDrop}
       >
-        <Dialog open={enableLoader} onOpenChange={setEnableLoader}>
-          <DialogContent className="flex justify-center items-center h-screen max-w-screen">
+        <Dialog open={enableLoader}>
+          <DialogContent
+            hideClose
+            onEscapeKeyDown={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => e.preventDefault()}
+            className="flex justify-center items-center h-screen max-w-screen"
+          >
             <Loader2
               className="animate-spin"
               size={'200px'}

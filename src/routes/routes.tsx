@@ -12,6 +12,8 @@ import PrivateRoute from '@/layouts/private/PrivateRoute';
 import Signin from '@/pages/Auth/Signin';
 import Signup from '@/pages/Auth/Signup';
 import Home from '@/pages/Home/Home';
+import SharedView from '@/pages/Shared/SharedView';
+import SharedWithMe from '@/pages/Shared/SharedWithMe';
 import Storage from '@/pages/Storage/Storage';
 import Trash from "@/pages/Trash/Trash";
 
@@ -85,6 +87,20 @@ const Routes = () => {
                 </DefaultLayout>
               </PrivateRoute>
             ),
+          },
+          {
+            path: ROUTES.sharedWithMe,
+            element: (
+              <PrivateRoute>
+                <DefaultLayout>
+                  <SharedWithMe />
+                </DefaultLayout>
+              </PrivateRoute>
+            ),
+          },
+          {
+            path: ROUTES.shareWithToken,
+            element: <SharedView />,
           },
           {
             path: "*",

@@ -19,3 +19,6 @@ export const FILE_TRASH_FILE_API = '/file_uploads/trash_file';
 export const FILE_REMOVE_FILE_API = '/file_uploads/remove_file';
 export const FILE_MOVE_FILE_API = '/file_uploads/move_file';
 export const FILE_STORAGE_USAGE_API = '/file_uploads/storage_usage';
+
+export const SHARES_API = '/shares';
+export const SHARED_API = '/shared';

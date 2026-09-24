@@ -1,4 +1,4 @@
-import { useEffect, useRef,useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import ActionCable, { Channel } from 'actioncable';
 
@@ -22,11 +22,15 @@ export const useActionCable = (channelName: string, token: string): HookReturnTy
   const consumer = useRef<ActionCable.Cable | null>(null);
 
   useEffect(() => {
-    // Prevent duplication subscription initialization
-    if (!consumer.current) {
-      const websocketUrl = process.env.REACT_APP_WEBSOCKET_URL ?? `ws://localhost:3000/cable`;
-      consumer.current = ActionCable.createConsumer(`${websocketUrl}?token=${token}`);
-    }
+    // Don't open a socket before we have a real token (otherwise the URL gets
+    // `?token=undefined` and the handshake is rejected).
+    if (!token || token === 'undefined') return;
+
+    const websocketUrl = process.env.REACT_APP_WEBSOCKET_URL ?? 'ws://localhost:3000/cable';
+
+    // One consumer per (re)connect so token changes / StrictMode remounts don't
+    // leave stale subscriptions behind.
+    consumer.current = ActionCable.createConsumer(`${websocketUrl}?token=${token}`);
 
     const newSubscription = consumer.current.subscriptions.create(channelName, {
       connected() {
@@ -50,9 +54,8 @@ export const useActionCable = (channelName: string, token: string): HookReturnTy
     setSend(() => sendFn);
 
     return () => {
-      if (newSubscription) {
-        newSubscription.unsubscribe();
-      }
+      consumer.current?.disconnect();
+      consumer.current = null;
     };
   }, [channelName, token]);
 
