@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { FILE_REMOVED, FILE_RENAMED } from '@/constants/socketActions';
+import { FILE_MOVED, FILE_REMOVED, FILE_RENAMED } from '@/constants/socketActions';
 
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
@@ -38,6 +38,9 @@ const FileList = ({ files }: IProps) => {
     const isFileRenamedAction =
       responseData && responseData.action === FILE_RENAMED;
 
+    const isFileMovedAction =
+      responseData && responseData.action === FILE_MOVED;
+
     const isFileRemovedAction =
       responseData && responseData.action === FILE_REMOVED;
 
@@ -45,7 +48,9 @@ const FileList = ({ files }: IProps) => {
       updateFileName(responseData);
     }
 
-    if (isFileRemovedAction) {
+    if (isFileMovedAction || isFileRemovedAction) {
+      // A moved file leaves the current folder, so drop it from the list the
+      // same way a removed file is handled.
       removeFilePath(responseData);
     }
   }, [receivedData, updateFileName, removeFilePath]);

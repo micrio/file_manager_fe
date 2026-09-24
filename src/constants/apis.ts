@@ -8,6 +8,7 @@ export const FOLDERS_ZIP_API = '/folders/download_zip';
 export const FOLDERS_RENAME_API = '/folders/rename';
 export const FOLDERS_TRASH_FOLDER_API = '/folders/trash_folder';
 export const FOLDERS_REMOVE_FOLDER_API = '/folders/remove_folder';
+export const FOLDERS_MOVE_FOLDER_API = '/folders/move_folder';
 export const FOLDER_DEFAULT_PARAM = "default"
 export const FOLDER_TRASHED_PARAM = "trashed"
 
@@ -16,3 +17,4 @@ export const FILES_GET_URL_API = '/file_uploads/view_file';
 export const FILE_RENAME_API = '/file_uploads/rename';
 export const FILE_TRASH_FILE_API = '/file_uploads/trash_file';
 export const FILE_REMOVE_FILE_API = '/file_uploads/remove_file';
+export const FILE_MOVE_FILE_API = '/file_uploads/move_file';

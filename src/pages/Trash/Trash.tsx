@@ -18,7 +18,7 @@ const Trash = () => {
 
   return (
     <div className="mx-10">
-      <FolderFileList items={contents} />
+      <FolderFileList items={contents} isTrash />
     </div>
   );
 };

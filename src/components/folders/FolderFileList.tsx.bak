@@ -27,9 +27,7 @@ import {
 } from '@/apis/folder/folderInterface';
 import FileView from '@/components/files/FileView';
 import { useFileExtensionCheck } from '@/hooks/useFileExtensionCheck';
-
 import MoveFileModal from './MoveFileModal';
-import MoveFolderModal from './MoveFolderModal';
 
 interface IProps {
   items: IFolderContentData[] | [];
@@ -97,18 +95,8 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
   // File-to-folder drag drop state (for MoveFileModal).
   const [fileModalOpen, setFileModalOpen] = useState(false);
   const [movingFile, setMovingFile] = useState<IFileContentData | null>(null);
+  const [fileModalOpen, setFileModalOpen] = useState(false);
   const [movingTargetFolder, setMovingTargetFolder] = useState<IFolderData | null>(null);
-
-  // Folder-to-folder drag drop state (for MoveFolderModal).
-  const [moveModalOpen, setMoveModalOpen] = useState(false);
-  const [movingFolder, setMovingFolder] = useState<IFolderData | null>(null);
-  const [movingTarget, setMovingTarget] = useState<IFolderData | null>(null);
-
-  const handleCloseFolderModal = () => {
-    setMoveModalOpen(false);
-    setMovingFolder(null);
-    setMovingTarget(null);
-  };
 
   const handleCloseFileModal = () => {
     setFileModalOpen(false);
@@ -129,19 +117,6 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
     if (source.type === 'folder') {
       moveFolder.setSourceFolderToken(sourceToken);
       moveFolder.setTargetFolderToken(targetItem.unique_token);
-      const sourcePath = (source as IFolderData).path;
-      const targetPath = (targetItem as IFolderData).path;
-      setMovingFolder({
-        id: source.id,
-        unique_token: source.unique_token,
-        path: typeof sourcePath === 'string' ? sourcePath : '',
-      });
-      setMovingTarget({
-        id: targetItem.id,
-        unique_token: targetItem.unique_token,
-        path: typeof targetPath === 'string' ? targetPath : '',
-      });
-      setMoveModalOpen(true);
       return;
     }
 
@@ -151,7 +126,7 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
     setMovingFile(source);
     setMovingTargetFolder({
       unique_token: targetItem.unique_token,
-      path: typeof targetItem.full_path === 'string' ? targetItem.full_path : '',
+      path: targetItem.full_path,
       id: null,
       created_at: '',
       parentFolderId: null,
@@ -179,7 +154,7 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
   };
 
   const handleItemDragEnter =
-    (token: string, isFolderItem: boolean) => () => {
+    (token: string, isFolderItem: boolean) => (_e: React.DragEvent) => {
       if (!isFolderItem) return;
       const sourceToken = dragStartTokenRef.current;
       if (sourceToken && sourceToken === token) return;
@@ -348,10 +323,7 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
     if (responseData.action === FILE_RENAMED) {
       updateFilePath(responseData as unknown as FileSocketData);
     } else if (responseData.action === FILE_MOVED) {
-      // A moved file left this folder: drop it from `contents` (same handler as
-      // FILE_REMOVED). It previously wrote to `useFileStore`'s `contents`, which
-      // Storage/Trash never render, so the moved row lingered on screen.
-      removeFileFromContents(responseData as unknown as FileSocketData);
+      useFileStore.getState().updateFileContentsPath(responseData as unknown as FileSocketData);
     } else if (responseData.action === FILE_REMOVED) {
       removeFileFromContents(responseData as unknown as FileSocketData);
     } else if (responseData.action === FOLDER_RENAMED) {
@@ -383,13 +355,6 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
         onClose={handleCloseFileModal}
         sourceFile={movingFile}
         targetFolder={movingTargetFolder}
-      />
-
-      <MoveFolderModal
-        open={moveModalOpen}
-        onClose={handleCloseFolderModal}
-        sourceFolder={movingFolder}
-        targetFolder={movingTarget}
       />
 
       <div className="flex flex-col mt-5">

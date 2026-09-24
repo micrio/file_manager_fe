@@ -2,6 +2,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { create } from 'zustand';
 
 import {
+  FILE_MOVE_FILE_API,
   FILE_REMOVE_FILE_API,
   FILE_RENAME_API,
   FILE_TRASH_FILE_API,
@@ -10,6 +11,7 @@ import {
 } from '@/constants/apis';
 
 import { IFileData, IFileUrlResponse } from '@/apis/file/fileInterface';
+import { IFolderContentData } from '@/apis/folder/folderInterface';
 
 import { useAuthStore } from './useAuthStore';
 
@@ -22,23 +24,48 @@ export type MutationResult = {
 type ResponseEnvelope = {
   success?: boolean;
   data?: unknown;
-  meta?: { error?: string; message?: string };
+  meta?: { error?: unknown; message?: unknown };
+  error?: unknown;
+  message?: unknown;
 };
 
+// Errors from the API are not always strings: Rails validation failures arrive
+// as `error: [{ field: "message" }]`. Rendering that directly into a toast or
+// `<p>{error}</p>` throws "Objects are not valid as a React child". Flatten any
+// shape (string, array, object) into a single readable string.
+function formatErrorMessage(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((entry) => formatErrorMessage(entry))
+      .filter((entry): entry is string => Boolean(entry));
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
+  if (typeof value === 'object') {
+    const parts = Object.values(value as Record<string, unknown>)
+      .map((entry) => formatErrorMessage(entry))
+      .filter((entry): entry is string => Boolean(entry));
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
+  return String(value);
+}
+
 function extractErrorMessage(err: AxiosError): string {
-  const body = err.response?.data as
-    | {
-        meta?: { error?: string; message?: string };
-        error?: string;
-        message?: string;
-      }
-    | undefined;
+  const body = err.response?.data as ResponseEnvelope | undefined;
 
   return (
-    body?.meta?.error ??
-    body?.meta?.message ??
-    body?.error ??
-    body?.message ??
+    formatErrorMessage(body?.meta?.error) ??
+    formatErrorMessage(body?.meta?.message) ??
+    formatErrorMessage(body?.error) ??
+    formatErrorMessage(body?.message) ??
     'Something went wrong'
   );
 }
@@ -57,7 +84,11 @@ function requestWithResult(promise: Promise<unknown>): Promise<MutationResult> {
       return {
         ok: false,
         message:
-          envelope.meta?.error ?? envelope.meta?.message ?? 'Something went wrong',
+          formatErrorMessage(envelope.meta?.error) ??
+          formatErrorMessage(envelope.meta?.message) ??
+          formatErrorMessage(envelope.error) ??
+          formatErrorMessage(envelope.message) ??
+          'Something went wrong',
       };
     }
 
@@ -80,6 +111,7 @@ export interface FileSocketData {
 
 interface IFile {
   files: IFileData[];
+  contents: IFolderContentData[];
   getFileList: (uniqueToken?: string, sortBy?: string, direction?: string) => Promise<MutationResult>;
   getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
   uploadFile: {
@@ -99,11 +131,23 @@ interface IFile {
   trashFileRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFileRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFilePath: (data: FileSocketData) => void;
+  moveFile: {
+    sourceFileToken: string | null;
+    targetFolderToken: string | null;
+    targetFolderName: string | null;
+    setSourceFileToken: (token: string) => void;
+    setTargetFolderToken: (token: string) => void;
+    setTargetFolderName: (name: string) => void;
+  };
+  moveFileRequest: () => Promise<MutationResult>;
+  updateFileContentsPath: (data: FileSocketData) => void;
+  removeFileFromContents: (data: FileSocketData) => void;
 }
 
 export const useFileStore = create<IFile>((set, getState) => {
   return {
     files: [],
+    contents: [],
 
     uploadFile: {
       folderUniqueToken: '',
@@ -280,6 +324,80 @@ export const useFileStore = create<IFile>((set, getState) => {
 
       set((state) => ({
         files: state.files.filter((file) => file.unique_token !== item.unique_token),
+      }));
+    },
+
+    moveFile: {
+      sourceFileToken: null,
+      targetFolderToken: null,
+      targetFolderName: null,
+      setSourceFileToken: (sourceFileToken: string) =>
+        set((state) => ({
+          ...state,
+          moveFile: { ...state.moveFile, sourceFileToken: sourceFileToken },
+        })),
+      setTargetFolderToken: (targetFolderToken: string) =>
+        set((state) => ({
+          ...state,
+          moveFile: { ...state.moveFile, targetFolderToken: targetFolderToken },
+        })),
+      setTargetFolderName: (targetFolderName: string) =>
+        set((state) => ({
+          ...state,
+          moveFile: { ...state.moveFile, targetFolderName: targetFolderName },
+        })),
+    },
+
+    moveFileRequest: async (): Promise<MutationResult> => {
+      const sourceToken = getState().moveFile.sourceFileToken;
+      const targetFolderToken = getState().moveFile.targetFolderToken;
+
+      // `folder_unique_token` must live *inside* `file_upload` — the backend
+      // reads it via params.require(:file_upload).permit(:folder_unique_token).
+      // Sending it at the top level silently targets the root folder instead.
+      const fileUpload: Record<string, unknown> = {
+        unique_token: sourceToken,
+      };
+
+      if (targetFolderToken !== null) {
+        fileUpload.folder_unique_token = targetFolderToken;
+      }
+
+      return requestWithResult(
+        useAuthStore.getState().api.putRequest(FILE_MOVE_FILE_API, {
+          file_upload: fileUpload,
+        })
+      );
+    },
+
+    updateFileContentsPath: (data: FileSocketData) => {
+      const file = data?.data[0];
+
+      if (!file) return;
+
+      set((state) => ({
+        contents: state.contents.map((item) =>
+          item.type !== 'folder' && item.unique_token === file.unique_token
+            ? {
+                ...item,
+                filename: file.name ?? file.filename ?? item.filename,
+                full_path: file.name ?? file.filename ?? item.full_path,
+              }
+            : item
+        ),
+      }));
+    },
+
+    removeFileFromContents: (data: FileSocketData) => {
+      const file = data?.data[0];
+
+      if (!file) return;
+
+      set((state) => ({
+        contents: state.contents.filter(
+          (item) =>
+            !(item.type !== 'folder' && item.unique_token === file.unique_token)
+        ),
       }));
     },
   };

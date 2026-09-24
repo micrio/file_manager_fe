@@ -4,6 +4,7 @@ import { create } from 'zustand';
 import {
   FOLDERS_BASE_API,
   FOLDERS_CONTENT_API,
+  FOLDERS_MOVE_FOLDER_API,
   FOLDERS_REMOVE_FOLDER_API,
   FOLDERS_RENAME_API,
   FOLDERS_TRASH_FOLDER_API,
@@ -25,23 +26,48 @@ export type MutationResult = {
 type ResponseEnvelope = {
   success?: boolean;
   data?: unknown;
-  meta?: { error?: string; message?: string };
+  meta?: { error?: unknown; message?: unknown };
+  error?: unknown;
+  message?: unknown;
 };
 
+// Errors from the API are not always strings: Rails validation failures arrive
+// as `error: [{ field: "message" }]`. Rendering that directly into a toast or
+// `<p>{error}</p>` throws "Objects are not valid as a React child". Flatten any
+// shape (string, array, object) into a single readable string.
+function formatErrorMessage(value: unknown): string | undefined {
+  if (value === null || value === undefined) return undefined;
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : undefined;
+  }
+
+  if (Array.isArray(value)) {
+    const parts = value
+      .map((entry) => formatErrorMessage(entry))
+      .filter((entry): entry is string => Boolean(entry));
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
+  if (typeof value === 'object') {
+    const parts = Object.values(value as Record<string, unknown>)
+      .map((entry) => formatErrorMessage(entry))
+      .filter((entry): entry is string => Boolean(entry));
+    return parts.length > 0 ? parts.join(', ') : undefined;
+  }
+
+  return String(value);
+}
+
 function extractErrorMessage(err: AxiosError): string {
-  const body = err.response?.data as
-    | {
-      meta?: { error?: string; message?: string };
-      error?: string;
-      message?: string;
-    }
-    | undefined;
+  const body = err.response?.data as ResponseEnvelope | undefined;
 
   return (
-    body?.meta?.error ??
-    body?.meta?.message ??
-    body?.error ??
-    body?.message ??
+    formatErrorMessage(body?.meta?.error) ??
+    formatErrorMessage(body?.meta?.message) ??
+    formatErrorMessage(body?.error) ??
+    formatErrorMessage(body?.message) ??
     'Something went wrong'
   );
 }
@@ -60,7 +86,11 @@ function requestWithResult(promise: Promise<unknown>): Promise<MutationResult> {
       return {
         ok: false,
         message:
-          envelope.meta?.error ?? envelope.meta?.message ?? 'Something went wrong',
+          formatErrorMessage(envelope.meta?.error) ??
+          formatErrorMessage(envelope.meta?.message) ??
+          formatErrorMessage(envelope.error) ??
+          formatErrorMessage(envelope.message) ??
+          'Something went wrong',
       };
     }
 
@@ -151,6 +181,14 @@ interface IFolder {
   trashFolderPath: (data: FolderSocketData) => void;
   removeFolderRequest: (uniqueToken: string) => Promise<MutationResult>;
   removeFolderPath: (data: FolderSocketData) => void;
+  moveFolder: {
+    sourceFolderToken: string | null;
+    targetFolderToken: string | null;
+    setSourceFolderToken: (token: string) => void;
+    setTargetFolderToken: (token: string) => void;
+  };
+  moveFolderRequest: () => Promise<MutationResult>;
+  moveFolderPath: (data: FolderSocketData) => void;
   downloadFolderRequest: (
     folderToken: string,
     folderName: string,
@@ -192,6 +230,21 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
         set((state) => ({
           ...state,
           renameFolder: { ...state.renameFolder, newPathName: newPathName },
+        })),
+    },
+
+    moveFolder: {
+      sourceFolderToken: null,
+      targetFolderToken: null,
+      setSourceFolderToken: (sourceFolderToken: string) =>
+        set((state) => ({
+          ...state,
+          moveFolder: { ...state.moveFolder, sourceFolderToken: sourceFolderToken },
+        })),
+      setTargetFolderToken: (targetFolderToken: string) =>
+        set((state) => ({
+          ...state,
+          moveFolder: { ...state.moveFolder, targetFolderToken: targetFolderToken },
         })),
     },
 
@@ -292,7 +345,7 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
     addSingleFileToList: (data: FileSocketData) => {
       const file = data?.data[0];
 
-      addFilesToList(file ? [file] : []);
+      getState().addFilesToList(file ? [file] : []);
     },
 
     updateFilePath: (data: FileSocketData) => {
@@ -412,6 +465,32 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
 
       if (!item) return;
 
+      set((state) =>
+        removeItemByToken(state.folders, state.contents, item.unique_token)
+      );
+    },
+
+    moveFolderRequest: async (): Promise<MutationResult> => {
+      const bodyData = {
+        folder: {
+          unique_token: getState().moveFolder.sourceFolderToken,
+          target_parent_unique_token: getState().moveFolder.targetFolderToken,
+        },
+      };
+
+      return requestWithResult(
+        useAuthStore.getState().api.putRequest(FOLDERS_MOVE_FOLDER_API, bodyData)
+      );
+    },
+
+    moveFolderPath: (data: FolderSocketData) => {
+      const item = data?.data[0];
+
+      if (!item) return;
+
+      // The moved folder is no longer a child of the folder currently being
+      // viewed, so drop it from the visible lists — same as removeFolderPath.
+      // This is the ActionCable path that keeps the UI in sync after a move.
       set((state) =>
         removeItemByToken(state.folders, state.contents, item.unique_token)
       );

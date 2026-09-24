@@ -80,7 +80,7 @@ const Home = () => {
                     <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2Z" />
                   </svg>
                 </div>
-                <span className="text-sm truncate text-foreground text-center w-full">{path}</span>
+                <span className="text-sm truncate text-foreground text-center w-full">{String(path)}</span>
               </div>
             ))}
           </div>
