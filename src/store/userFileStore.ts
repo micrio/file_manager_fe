@@ -5,6 +5,7 @@ import {
   FILE_MOVE_FILE_API,
   FILE_REMOVE_FILE_API,
   FILE_RENAME_API,
+  FILE_STORAGE_USAGE_API,
   FILE_TRASH_FILE_API,
   FILES_BASE_API,
   FILES_GET_URL_API,
@@ -114,6 +115,8 @@ export interface FileSocketData {
 interface IFile {
   files: IFileData[];
   contents: IFolderContentData[];
+  storageUsed: number | null;
+  getStorageUsage: () => Promise<MutationResult>;
   getFileList: (uniqueToken?: string, sortBy?: string, direction?: string) => Promise<MutationResult>;
   getFileUrl: (uniqueToken: string) => Promise<IFileUrlResponse>;
   uploadFile: {
@@ -154,6 +157,7 @@ export const useFileStore = create<IFile>((set, getState) => {
   return {
     files: [],
     contents: [],
+    storageUsed: null,
 
     uploadFile: {
       folderUniqueToken: '',
@@ -281,6 +285,19 @@ export const useFileStore = create<IFile>((set, getState) => {
       return result.ok
         ? { data: result.data as IFileUrlResponse['data'] }
         : { data: { file_url: '', file_name: '', file_extension: '' } };
+    },
+
+    getStorageUsage: async (): Promise<MutationResult> => {
+      const result = await requestWithResult(
+        useAuthStore.getState().api.getRequest(FILE_STORAGE_USAGE_API)
+      );
+
+      if (result.ok) {
+        const data = result.data as { used?: number } | undefined;
+        set((state) => ({ ...state, storageUsed: data?.used ?? 0 }));
+      }
+
+      return result;
     },
 
     updateFileName: (data: FileSocketData) => {
