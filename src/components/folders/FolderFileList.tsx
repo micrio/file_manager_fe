@@ -405,32 +405,33 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
           </div>
         )}
 
+        <div className="flex items-center justify-end gap-1 px-4 pt-2">
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="List view"
+            title="List view"
+            onClick={() => commitView('list')}
+            className={view === 'list' ? 'bg-neutral-200 dark:bg-neutral-700' : ''}
+          >
+            <List className="w-4 h-4" />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label="Grid view"
+            title="Grid view"
+            onClick={() => commitView('grid')}
+            className={view === 'grid' ? 'bg-neutral-200 dark:bg-neutral-700' : ''}
+          >
+            <Grid3x3 className="w-4 h-4" />
+          </Button>
+        </div>
+
         <div className="flex items-center px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           <div className="w-10"></div>
           <div className="flex-grow">Name</div>
           <div className="mr-3">Created At</div>
-          <div className="flex items-center gap-1">
-            <Button
-              size="icon"
-              variant="outline"
-              aria-label="List view"
-              title="List view"
-              onClick={() => commitView('list')}
-              className={view === 'list' ? 'bg-neutral-200 dark:bg-neutral-700' : ''}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-            <Button
-              size="icon"
-              variant="outline"
-              aria-label="Grid view"
-              title="Grid view"
-              onClick={() => commitView('grid')}
-              className={view === 'grid' ? 'bg-neutral-200 dark:bg-neutral-700' : ''}
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </Button>
-          </div>
         </div>
 
         <div

@@ -23,8 +23,8 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
 
   return (
     <>
-      <div className="relative w-[280px] min-h-screen border-r p-10">
-        <div className="flex justify-between items-center mb-10">
+      <div className="relative w-[280px] min-h-screen border-r py-10 px-4">
+        <div className="flex justify-between items-center mb-10 px-2">
           <h1 className="font-bold text-lg">{APP.appName}</h1>
           <ThemeToggle />
         </div>
@@ -47,7 +47,7 @@ const Sidebar = ({ handleLogout }: ISidebar) => {
           ))}
         </nav>
 
-        <div className="absolute bottom-10 left-10">
+        <div className="absolute bottom-10 left-4">
           <Button
             variant="outline"
             className="flex items-center gap-2"
