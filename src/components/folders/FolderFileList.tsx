@@ -833,7 +833,9 @@ const ContentItem = ({
                 <div className="truncate text-sm font-medium text-foreground">
                   {name}
                 </div>
-                <div className="text-xs text-muted-foreground">{created}</div>
+                <div className="text-xs text-muted-foreground">
+                  {formatFileSize(item.size)} · {created}
+                </div>
               </div>
             </>
           )}
@@ -871,7 +873,7 @@ const ContentItem = ({
               <span className="w-24 text-right text-xs text-muted-foreground font-medium whitespace-nowrap"
                 onClick={() => { if (!dragRef.current.isDragging) openContent(); }}
               >
-                —
+                {formatFileSize(item.size)}
               </span>
               <span className="w-56 text-right text-xs text-muted-foreground font-medium whitespace-nowrap"
                 onClick={() => { if (!dragRef.current.isDragging) openContent(); }}

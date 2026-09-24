@@ -434,15 +434,23 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       if (!folderItem) return;
 
       set((state) => ({
-        folders: [folderItem, ...state.folders],
-        contents: [
-          {
-            ...folderItem,
-            full_path: folderItem.path ? `${folderItem.path}/` : null,
-            type: 'folder',
-          } as IFolderContentData,
-          ...state.contents,
-        ],
+        // Home renders `folders` ("Suggested Folders"), while Storage/Trash
+        // render `contents`. A new folder must land in both, otherwise it only
+        // appears on the page whose slice matches. De-dupe so the socket
+        // broadcast and any local prepend don't double the row.
+        folders: state.folders.some((f) => f.unique_token === folderItem.unique_token)
+          ? state.folders
+          : [folderItem, ...state.folders],
+        contents: state.contents.some((c) => c.unique_token === folderItem.unique_token)
+          ? state.contents
+          : [
+              {
+                ...folderItem,
+                full_path: folderItem.path ? `${folderItem.path}/` : null,
+                type: 'folder',
+              } as IFolderContentData,
+              ...state.contents,
+            ],
       }));
     },
 
