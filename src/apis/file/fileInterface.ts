@@ -6,6 +6,7 @@ export interface IFileData {
   file_extension: string | null;
   folder_id: number | null;
   created_at: string | null;
+  size?: number | null;
   thumbnails?: { small?: string; medium?: string } | null;
 }
 

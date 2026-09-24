@@ -107,6 +107,7 @@ export interface FileSocketData {
     file_extension: string | null;
     folder_id: number | null;
     created_at: string;
+    size?: number | null;
   }>;
 }
 

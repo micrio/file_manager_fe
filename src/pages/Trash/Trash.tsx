@@ -9,12 +9,18 @@ import { useFoldersStore } from '@/store/useFolderStore';
 import FolderFileList from '@/components/folders/FolderFileList';
 
 const Trash = () => {
-  const { contents, getFoldersContent } = useFoldersStore();
+  const { contents, getFoldersContent, contentSort, contentFilter } = useFoldersStore();
   const { id } = useParams();
 
   useEffect(() => {
     getFoldersContent(FOLDER_TRASHED_PARAM, id);
-  }, [id, getFoldersContent]);
+  }, [
+    id,
+    getFoldersContent,
+    contentSort.sortBy,
+    contentSort.direction,
+    contentFilter.itemType,
+  ]);
 
   return (
     <div className="mx-10">

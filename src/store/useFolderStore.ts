@@ -104,6 +104,7 @@ const buildUrl = (
   type?: string,
   sortBy?: string,
   direction?: string,
+  itemType?: string,
 ) => {
   const params: string[] = [];
 
@@ -123,6 +124,10 @@ const buildUrl = (
     params.push(`direction=${direction}`);
   }
 
+  if (itemType !== undefined) {
+    params.push(`item_type=${itemType}`);
+  }
+
   return params.length > 0 ? `${base}?${params.join('&')}` : base;
 };
 
@@ -134,6 +139,80 @@ const removeItemByToken = (
   folders: folders.filter((item) => item.unique_token !== token),
   contents: contents.filter((item) => item.unique_token !== token),
 });
+
+export type ContentSortBy = 'name' | 'size' | 'created_at';
+export type ContentSortDirection = 'asc' | 'desc';
+
+export interface ContentSort {
+  sortBy: ContentSortBy;
+  direction: ContentSortDirection;
+}
+
+export type ContentItemTypeFilter = 'all' | 'folder' | 'file';
+
+export interface ContentFilter {
+  itemType: ContentItemTypeFilter;
+}
+
+const CONTENT_SORT_STORAGE_KEY = 'contentSort';
+const CONTENT_FILTER_STORAGE_KEY = 'contentFilter';
+
+const readInitialContentSort = (): ContentSort => {
+  try {
+    const raw = localStorage.getItem(CONTENT_SORT_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ContentSort>;
+      const sortBy: ContentSortBy =
+        parsed.sortBy === 'name' || parsed.sortBy === 'size'
+          ? parsed.sortBy
+          : 'created_at';
+      const direction: ContentSortDirection =
+        parsed.direction === 'asc' ? 'asc' : 'desc';
+
+      return { sortBy, direction };
+    }
+  } catch {
+    // ignore malformed storage
+  }
+
+  return { sortBy: 'created_at', direction: 'desc' };
+};
+
+const persistContentSort = (sort: ContentSort) => {
+  try {
+    localStorage.setItem(CONTENT_SORT_STORAGE_KEY, JSON.stringify(sort));
+  } catch {
+    // ignore write failures (e.g. private mode)
+  }
+};
+
+const readInitialContentFilter = (): ContentFilter => {
+  try {
+    const raw = localStorage.getItem(CONTENT_FILTER_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as Partial<ContentFilter>;
+      if (
+        parsed.itemType === 'all' ||
+        parsed.itemType === 'folder' ||
+        parsed.itemType === 'file'
+      ) {
+        return { itemType: parsed.itemType };
+      }
+    }
+  } catch {
+    // ignore malformed storage
+  }
+
+  return { itemType: 'all' };
+};
+
+const persistContentFilter = (filter: ContentFilter) => {
+  try {
+    localStorage.setItem(CONTENT_FILTER_STORAGE_KEY, JSON.stringify(filter));
+  } catch {
+    // ignore write failures (e.g. private mode)
+  }
+};
 
 export interface FolderSocketData {
   action: string;
@@ -149,6 +228,14 @@ export interface FolderSocketData {
 interface IFolder {
   folders: IFolderData[];
   contents: IFolderContentData[];
+  contentSort: ContentSort & {
+    setSort: (sortBy: ContentSortBy, direction: ContentSortDirection) => void;
+    setSortBy: (sortBy: ContentSortBy) => void;
+    setDirection: (direction: ContentSortDirection) => void;
+  };
+  contentFilter: ContentFilter & {
+    setItemType: (itemType: ContentItemTypeFilter) => void;
+  };
   getFoldersList: (type: string, uniqueToken?: string) => Promise<MutationResult>;
   getFoldersContent: (
     type: string,
@@ -199,6 +286,36 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
   return {
     folders: [],
     contents: [],
+
+    contentSort: {
+      ...readInitialContentSort(),
+      setSort: (sortBy, direction) =>
+        set((state) => {
+          persistContentSort({ sortBy, direction });
+          return { ...state, contentSort: { ...state.contentSort, sortBy, direction } };
+        }),
+      setSortBy: (sortBy) =>
+        set((state) => {
+          const direction = state.contentSort.direction;
+          persistContentSort({ sortBy, direction });
+          return { ...state, contentSort: { ...state.contentSort, sortBy, direction } };
+        }),
+      setDirection: (direction) =>
+        set((state) => {
+          const sortBy = state.contentSort.sortBy;
+          persistContentSort({ sortBy, direction });
+          return { ...state, contentSort: { ...state.contentSort, sortBy, direction } };
+        }),
+    },
+
+    contentFilter: {
+      ...readInitialContentFilter(),
+      setItemType: (itemType) =>
+        set((state) => {
+          persistContentFilter({ itemType });
+          return { ...state, contentFilter: { ...state.contentFilter, itemType } };
+        }),
+    },
 
     createFolder: {
       pathName: '',
@@ -270,7 +387,20 @@ export const useFoldersStore = create<IFolder>((set, getState) => {
       sortBy?: string,
       direction?: string,
     ): Promise<MutationResult> => {
-      const url = buildUrl(FOLDERS_CONTENT_API, uniqueToken, type, sortBy, direction);
+      const { contentSort, contentFilter } = getState();
+      // Fall back to the shared sort/filter state (Sort menu / column headers).
+      const resolvedSortBy = sortBy ?? contentSort.sortBy;
+      const resolvedDirection = direction ?? contentSort.direction;
+      const itemType =
+        contentFilter.itemType === 'all' ? undefined : contentFilter.itemType;
+      const url = buildUrl(
+        FOLDERS_CONTENT_API,
+        uniqueToken,
+        type,
+        resolvedSortBy,
+        resolvedDirection,
+        itemType,
+      );
       const result = await requestWithResult(
         useAuthStore.getState().api.getRequest(url)
       );

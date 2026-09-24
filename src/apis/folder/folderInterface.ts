@@ -15,6 +15,7 @@ export interface IFileContentData {
   filename: string;
   file_extension: string;
   created_at: string;
+  size?: number | null;
   type: "file_upload" | "file";
   thumbnails?: { small?: string; medium?: string } | null;
 }
@@ -26,6 +27,7 @@ export interface IFolderContentItemData {
   full_path: string | null;
   parent_folder_id: number | null;
   created_at: string;
+  size?: number | null;
   type: "folder";
   thumbnails?: { small?: string; medium?: string } | null;
 }

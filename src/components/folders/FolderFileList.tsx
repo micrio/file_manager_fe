@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { File, FileX, Folder, Grid3x3, Image, List, LucideMoreVertical, Video } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, File, FileX, Folder, Grid3x3, Image, List, LucideMoreVertical, SlidersHorizontal, Video } from 'lucide-react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { ROUTES } from '@/constants/routes';
 import { FILE_MOVED, FILE_REMOVED, FILE_RENAMED, FOLDER_MOVED, FOLDER_REMOVED, FOLDER_RENAMED } from '@/constants/socketActions';
 
 import { useAuthStore } from '@/store/useAuthStore';
-import { FolderSocketData, useFoldersStore } from '@/store/useFolderStore';
+import { ContentItemTypeFilter, ContentSortBy, ContentSortDirection, FolderSocketData, useFoldersStore } from '@/store/useFolderStore';
 import { FileSocketData, useFileStore } from '@/store/userFileStore';
 import { useSocketStore } from '@/store/useSocketStore';
 
@@ -44,6 +44,23 @@ type ViewMode = 'list' | 'grid';
 
 const FOLDER_MOVE_THRESHOLD = 5; // pixels
 
+const CONTENT_SORT_OPTIONS: Array<{ value: ContentSortBy; label: string }> = [
+  { value: 'name', label: 'Name' },
+  { value: 'size', label: 'Size' },
+  { value: 'created_at', label: 'Date modified' },
+];
+
+const CONTENT_SORT_DIRECTIONS: Array<{ value: ContentSortDirection; label: string }> = [
+  { value: 'asc', label: 'Ascending' },
+  { value: 'desc', label: 'Descending' },
+];
+
+const CONTENT_FILTER_OPTIONS: Array<{ value: ContentItemTypeFilter; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'folder', label: 'Folders' },
+  { value: 'file', label: 'Files' },
+];
+
 function formatCreatedAt(createdAt: string | null): string {
   if (!createdAt) return '';
 
@@ -66,6 +83,22 @@ function formatCreatedAt(createdAt: string | null): string {
   return `${values.weekday}, ${values.day}, ${values.year} ${values.hour}:${values.minute} ${values.dayPeriod}`;
 }
 
+function formatFileSize(size: number | null | undefined): string {
+  if (size === null || size === undefined) return '—';
+  if (size < 1024) return `${size} B`;
+
+  const units = ['KB', 'MB', 'GB', 'TB'];
+  let value = size / 1024;
+  let unit = 0;
+
+  while (value >= 1024 && unit < units.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+
+  return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unit]}`;
+}
+
 const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -85,6 +118,8 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
   const { api } = useAuthStore();
   const { getFileUrl } = useFileStore();
   const {
+    contentSort,
+    contentFilter,
     updateFolderPath,
     removeFolderPath,
     updateFilePath,
@@ -297,6 +332,16 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
     } catch { /* storage unavailable */ }
   };
 
+  const handleSort = (sortBy: ContentSortBy) => {
+    if (contentSort.sortBy === sortBy) {
+      contentSort.setDirection(contentSort.direction === 'asc' ? 'desc' : 'asc');
+      return;
+    }
+
+    // Newest first for dates, A→Z / smallest first for the rest.
+    contentSort.setSort(sortBy, sortBy === 'created_at' ? 'desc' : 'asc');
+  };
+
   const [previewOpen, setPreviewOpen] = useState(false);
   const [sourceUrl, setSourceUrl] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
@@ -405,7 +450,7 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-1 px-4 pt-2">
+        <div className="flex items-center justify-end gap-1 px-4 pb-2 pt-3">
           <Button
             size="icon"
             variant="outline"
@@ -428,10 +473,121 @@ const FolderFileList = ({ items = [], isTrash = false }: IProps) => {
           </Button>
         </div>
 
-        <div className="flex items-center px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          <div className="w-10"></div>
-          <div className="flex-grow">Name</div>
-          <div className="mr-3">Created At</div>
+        <div className="flex items-center gap-3 px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          {view === 'list' ? (
+            <>
+              <div className="w-8"></div>
+              <button
+                type="button"
+                onClick={() => handleSort('name')}
+                className={`flex flex-grow items-center gap-1 uppercase tracking-wider hover:text-foreground ${contentSort.sortBy === 'name' ? 'text-foreground' : ''}`}
+              >
+                Name
+                {contentSort.sortBy === 'name' && (
+                  contentSort.direction === 'asc'
+                    ? <ArrowUp className="w-3 h-3" />
+                    : <ArrowDown className="w-3 h-3" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSort('size')}
+                className={`flex w-24 items-center justify-end gap-1 uppercase tracking-wider hover:text-foreground ${contentSort.sortBy === 'size' ? 'text-foreground' : ''}`}
+              >
+                File Size
+                {contentSort.sortBy === 'size' && (
+                  contentSort.direction === 'asc'
+                    ? <ArrowUp className="w-3 h-3" />
+                    : <ArrowDown className="w-3 h-3" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSort('created_at')}
+                className={`flex w-56 items-center justify-end gap-1 uppercase tracking-wider hover:text-foreground ${contentSort.sortBy === 'created_at' ? 'text-foreground' : ''}`}
+              >
+                Created At
+                {contentSort.sortBy === 'created_at' && (
+                  contentSort.direction === 'asc'
+                    ? <ArrowUp className="w-3 h-3" />
+                    : <ArrowDown className="w-3 h-3" />
+                )}
+              </button>
+            </>
+          ) : (
+            <div className="flex-grow"></div>
+          )}
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                aria-label="Sort and filter"
+                title="Sort"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2 bg-popover">
+              <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Type
+              </p>
+              {CONTENT_FILTER_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => contentFilter.setItemType(option.value)}
+                  className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-secondary"
+                >
+                  {option.label}
+                  {contentFilter.itemType === option.value && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+
+              <div className="my-1 h-px bg-border" />
+
+              <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Sort by
+              </p>
+              {CONTENT_SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => contentSort.setSortBy(option.value)}
+                  className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-secondary"
+                >
+                  {option.label}
+                  {contentSort.sortBy === option.value && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+
+              <div className="my-1 h-px bg-border" />
+
+              <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Sort direction
+              </p>
+              {CONTENT_SORT_DIRECTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => contentSort.setDirection(option.value)}
+                  className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm hover:bg-secondary"
+                >
+                  <span className="flex items-center gap-2">
+                    {option.value === 'asc' ? (
+                      <ArrowUp className="w-4 h-4" />
+                    ) : (
+                      <ArrowDown className="w-4 h-4" />
+                    )}
+                    {option.label}
+                  </span>
+                  {contentSort.direction === option.value && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div
@@ -659,7 +815,9 @@ const ContentItem = ({
                 <div className="truncate text-sm font-medium text-foreground">
                   {name}
                 </div>
-                <div className="text-xs text-muted-foreground">{created}</div>
+                <div className="text-xs text-muted-foreground">
+                  {formatFileSize(item.size)} · {created}
+                </div>
               </div>
             </div>
           ) : (
@@ -710,7 +868,12 @@ const ContentItem = ({
               >
                 {name}
               </Label>
-              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-2"
+              <span className="w-24 text-right text-xs text-muted-foreground font-medium whitespace-nowrap"
+                onClick={() => { if (!dragRef.current.isDragging) openContent(); }}
+              >
+                —
+              </span>
+              <span className="w-56 text-right text-xs text-muted-foreground font-medium whitespace-nowrap"
                 onClick={() => { if (!dragRef.current.isDragging) openContent(); }}
               >
                 {created}
@@ -731,7 +894,10 @@ const ContentItem = ({
               <Label className="text-sm font-medium text-foreground flex-grow cursor-pointer select-none">
                 {name}
               </Label>
-              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap mr-2">
+              <span className="w-24 text-right text-xs text-muted-foreground font-medium whitespace-nowrap">
+                {formatFileSize(item.size)}
+              </span>
+              <span className="w-56 text-right text-xs text-muted-foreground font-medium whitespace-nowrap">
                 {created}
               </span>
               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
