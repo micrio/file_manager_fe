@@ -5,19 +5,21 @@
 A File manager with React Frontend and [Rails Backend](https://github.com/voidzenn/file_manager). Allows users to manage their files and folders seamlessly. The app uses Minio for object storage, ensuring that the structure in the File Manager UI mirrors the structure in Minio, providing a reliable and intuitive user experience. Additionally, the app features real-time updates with ActionCable, allowing users to see changes immediately as they happen.
 
 ## Features
-- **Folder Management:**
-  - Create Folder
-  - Create Nested Folder
-  - Rename Folder
-  - Remove Folder
-  - Get Folder List
-
-- **File Management:**
-  - Create File
-  - Create File inside a Folder
-  - Rename File
-  - Remove File
-  - View File
+- **Authentication** — sign up & sign in with JWT session handling (auto refresh on expiry).
+- **Folder Management** — create, create nested, rename, move (drag-and-drop or menu), trash, permanently delete, listing.
+- **File Management** — upload (dialog & drag-and-drop, multiple files), rename, move, preview, trash, permanently delete.
+- **Drag & Drop** — drop files anywhere on Storage to upload, and drag rows onto a folder to move them.
+- **Upload Progress** — Google-Drive-style progress bar toast while uploading.
+- **Thumbnails** — image and video thumbnails (small/medium) shown in list and grid views.
+- **Media Support** — images, common video formats (mp4, mov, webm, ...) and PDF, with an in-app preview modal.
+- **Layouts** — list and grid views (persisted).
+- **Sorting & Filtering** — sort by name, size or created date (asc/desc) and filter all / folders / files.
+- **File & Folder Size** — columns that show per-file size and recursive folder totals.
+- **Storage Usage** — total storage used, shown in the sidebar and updated in real time.
+- **Real-time Updates** — ActionCable keeps the UI in sync (create / rename / move / remove / share).
+- **Sharing** — share a file or folder with a specific existing user (autocomplete by email) or with anyone via a secure link; a **Shared with me** page (list/grid) with browse & download.
+- **Trash** — soft-deleted items with permanent delete.
+- **Dark / Light theme.**
 
 ## Technology Stack
 - **React 18**: Framework
