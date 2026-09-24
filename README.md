@@ -29,14 +29,16 @@ A File manager with React Frontend and [Rails Backend](https://github.com/voidze
 - **Zod**: Schema validation
 
 ## Preview
-### Demo
-[Watch Video](https://drive.google.com/file/d/1sCuIr0_DZvcVsbu38O85gBYM-0qf9P_9/view?usp=sharing)
 ### Screenshots
-![Screenshot from 2024-08-06 00-44-11](https://github.com/user-attachments/assets/354ecbc3-c895-49c3-b5f4-0139bd782bc3)
-![Screenshot from 2024-08-06 00-43-59](https://github.com/user-attachments/assets/eebcab22-932a-4934-ba8a-113bb9c2dc02)
-![Screenshot from 2024-08-05 17-49-49](https://github.com/user-attachments/assets/526ace27-cc08-4037-b754-dc5dfb15a803)
-![Screenshot from 2024-08-05 17-50-25](https://github.com/user-attachments/assets/327fe08a-13ce-4d5c-9bf5-076900658301)
-![Screenshot from 2024-08-05 17-50-28](https://github.com/user-attachments/assets/4ebdb208-39af-402c-9f79-4add5a83d14f)
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 37 19 AM" src="https://github.com/user-attachments/assets/51c1d018-9e99-41a0-bf56-242d9467279f" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 37 30 AM" src="https://github.com/user-attachments/assets/0b6d035f-cd53-439a-862f-0b4ccba44f57" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 38 07 AM" src="https://github.com/user-attachments/assets/3f72de27-e749-43e2-8285-ae0eddade313" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 38 55 AM" src="https://github.com/user-attachments/assets/c00782e6-7ebd-4f5c-bdf9-ad575e65c940" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 39 13 AM" src="https://github.com/user-attachments/assets/fe6a1f03-3598-44ec-b555-e1c25a7f7131" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 39 25 AM" src="https://github.com/user-attachments/assets/f8edc37c-98f9-4f41-8aff-2d338c9a88fa" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 39 35 AM" src="https://github.com/user-attachments/assets/1e1657c3-953a-4012-a5ab-f2ff50ad9288" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 1 39 52 AM" src="https://github.com/user-attachments/assets/6e9319eb-251b-4204-8abe-6b22f26b1e61" />
+<img width="1505" height="897" alt="Screenshot 2026-09-25 at 2 26 10 AM" src="https://github.com/user-attachments/assets/f55764e7-b49a-43b9-90b6-62fad1dd3957" />
 
 ## Backend API Documentation
 - When accessing BE documentation you need follow the [steps](https://github.com/voidzenn/file_manager?tab=readme-ov-file#setup)
