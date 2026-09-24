@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { string, z } from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -49,7 +49,6 @@ const SignupSchema = z
 
 const Signup = () => {
   const { signup, loading } = useAuthStore();
-  const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof SignupSchema>>({
     resolver: zodResolver(SignupSchema),
@@ -93,21 +92,25 @@ const Signup = () => {
         duration: SHORT_DELAY_TIME,
       });
     }
-  }, [signup.success, signup.successMessage, navigate]);
+  }, [signup.success, signup.successMessage]);
 
   // Redirect after a successful signup. Keyed on `signup.success` so it runs
   // only when the flag flips true; `useTimeout` here would have fired once on
   // mount (before success) and never again, leaving the user on the form.
+  //
+  // Use a hard reload instead of client-side navigation: TOAST_REMOVE_DELAY is
+  // ~16min, so the success toast stays in the global Toaster and would linger
+  // over the signin page. A full reload resets that store (and the auth state).
   useEffect(() => {
     if (!signup.success) return;
 
     const timer = setTimeout(() => {
       useAuthStore.getState().signup.initializeState();
-      navigate(ROUTES.signin);
+      window.location.href = ROUTES.signin;
     }, SHORT_DELAY_TIME);
 
     return () => clearTimeout(timer);
-  }, [signup.success, navigate]);
+  }, [signup.success]);
 
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center bg-background px-4 py-8">
